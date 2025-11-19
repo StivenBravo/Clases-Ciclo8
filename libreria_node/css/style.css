@@ -1,0 +1,39 @@
+.card-img-top {
+    width: 100%;
+    height: 15vw;
+    object-fit: cover;
+}
+
+.product-card {
+    transition: transform 0.2s;
+    margin-bottom: 15px;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.catalogo-scroll {
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.catalogo-scroll::-webkit-scrollbar {
+    width: 8px;
+}
+
+.catalogo-scroll::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.catalogo-scroll::-webkit-scrollbar-thumb {
+    background: #17a2b8;
+    border-radius: 10px;
+}
+
+.catalogo-scroll::-webkit-scrollbar-thumb:hover {
+    background: #138496;
+}

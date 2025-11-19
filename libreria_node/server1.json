@@ -1,0 +1,42 @@
+[
+    {
+        "titulo": "Cien Años de Soledad",
+        "autor": "Gabriel García Márquez",
+        "precio": 45.00
+    },
+    {
+        "titulo": "El Principito",
+        "autor": "Antoine de Saint-Exupéry",
+        "precio": 25.00
+    },
+    {
+        "titulo": "1984",
+        "autor": "George Orwell",
+        "precio": 38.00
+    },
+    {
+        "titulo": "El Alquimista",
+        "autor": "Paulo Coelho",
+        "precio": 32.00
+    },
+    {
+        "titulo": "Don Quijote de la Mancha",
+        "autor": "Miguel de Cervantes",
+        "precio": 55.00
+    },
+    {
+        "titulo": "Harry Potter y la Piedra Filosofal",
+        "autor": "J.K. Rowling",
+        "precio": 42.00
+    },
+    {
+        "titulo": "Orgullo y Prejuicio",
+        "autor": "Jane Austen",
+        "precio": 35.00
+    },
+    {
+        "titulo": "La Sombra del Viento",
+        "autor": "Carlos Ruiz Zafón",
+        "precio": 40.00
+    }
+]

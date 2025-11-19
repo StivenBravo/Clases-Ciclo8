@@ -1,0 +1,138 @@
+[
+    {
+        "subtotal": 166.5,
+        "igv": 29.97,
+        "total": 196.47,
+        "fecha": "2025-09-19T00:14:18.958Z",
+        "items": [
+            {
+                "nombre": "Lomo Saltado",
+                "precio": 35.5
+            },
+            {
+                "nombre": "Cabrito",
+                "precio": 32
+            },
+            {
+                "nombre": "Ceviche",
+                "precio": 40
+            },
+            {
+                "nombre": "Pisco Sour",
+                "precio": 25
+            },
+            {
+                "nombre": "Chilcano",
+                "precio": 22
+            },
+            {
+                "nombre": "Cerveza Pilsen",
+                "precio": 12
+            }
+        ]
+    },
+    {
+        "subtotal": 139,
+        "igv": 25.02,
+        "total": 164.02,
+        "fecha": "2025-09-19T00:30:48.463Z",
+        "items": [
+            {
+                "nombre": "Arroz con pato",
+                "precio": 25
+            },
+            {
+                "nombre": "Ceviche",
+                "precio": 40
+            },
+            {
+                "nombre": "Milanesa de Pollo",
+                "precio": 15
+            },
+            {
+                "nombre": "Cerveza Pilsen",
+                "precio": 12
+            },
+            {
+                "nombre": "Pisco Sour",
+                "precio": 25
+            },
+            {
+                "nombre": "Chilcano",
+                "precio": 22
+            }
+        ]
+    },
+    {
+        "subtotal": 144.5,
+        "igv": 26.01,
+        "total": 170.51,
+        "fecha": "2025-09-19T00:36:09.951Z",
+        "items": [
+            {
+                "nombre": "Lomo Saltado",
+                "precio": 35.5
+            },
+            {
+                "nombre": "Aji de Gallina",
+                "precio": 30
+            },
+            {
+                "nombre": "Cabrito",
+                "precio": 32
+            },
+            {
+                "nombre": "Pisco Sour",
+                "precio": 25
+            },
+            {
+                "nombre": "Chilcano",
+                "precio": 22
+            }
+        ]
+    },
+    {
+        "subtotal": 87,
+        "igv": 15.66,
+        "total": 102.66,
+        "fecha": "2025-11-11T00:16:25.877Z",
+        "items": [
+            {
+                "nombre": "Arroz con pato",
+                "precio": 25
+            },
+            {
+                "nombre": "Ceviche",
+                "precio": 40
+            },
+            {
+                "nombre": "Chilcano",
+                "precio": 22
+            }
+        ]
+    },
+    {
+        "subtotal": 79,
+        "igv": 14.22,
+        "total": 93.22,
+        "fecha": "2025-11-12T19:37:16.036Z",
+        "items": [
+            {
+                "nombre": "Ceviche + Cabrito",
+                "precio": 40
+            },
+            {
+                "nombre": "Milanesa de Pollo",
+                "precio": 15
+            },
+            {
+                "nombre": "Cerveza Pilsen",
+                "precio": 12
+            },
+            {
+                "nombre": "Cerveza Pilsen",
+                "precio": 12
+            }
+        ]
+    }
+]

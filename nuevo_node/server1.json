@@ -1,0 +1,34 @@
+[
+    {
+        "nombre": "Lomo Saltado",
+        "precio": 35.5
+    },
+    {
+        "nombre": "Aji de Gallina",
+        "precio": 30
+    },
+    {
+        "nombre": "Ceviche",
+        "precio": 40
+    },
+    {
+        "nombre": "Arroz con pato",
+        "precio": 25
+    },
+    {
+        "nombre": "Cabrito",
+        "precio": 32
+    },
+    {
+        "nombre": "Milanesa de Pollo",
+        "precio": 15
+    },
+    {
+        "nombre": "Tallarines Verdes",
+        "precio": 22
+    },
+    {
+        "nombre": "Ceviche + Cabrito",
+        "precio": 40
+    }
+]

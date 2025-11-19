@@ -1,0 +1,36 @@
+EXPLICACIÓN PASO A PASO - HISTORIAL DE CUENTAS
+
+Esta nueva sección permite visualizar todas las "facturas" o cuentas que han sido finalizadas y guardadas en el sistema.
+
+---
+1. CÓMO FUNCIONA
+---
+
+1.1. **Navegación**: Para acceder, simplemente abre el archivo `cuentas.html` en tu navegador. Puedes añadir un enlace en `index.html` para facilitar el acceso.
+
+1.2. **Ejecución**: Es crucial que el `server2.js` esté corriendo en una terminal (`node server2.js`), ya que es el responsable de proveer los datos.
+
+---
+2. ARCHIVOS INVOLUCRADOS
+---
+
+*   `cuentas.html`: Es la nueva página que muestra el historial.
+    - Su estructura es simple: un título, un botón para volver al menú principal (`index.html`) y un contenedor `<div id="historial-cuentas">`.
+    - Utiliza el componente "Acordeón" de Bootstrap para mostrar cada cuenta de forma organizada. Cada "item" del acordeón representará una cuenta guardada.
+    - Al final, carga el script `js/cuentas.js`, que es el que le da vida a la página.
+
+*   `js/cuentas.js`: El motor de la página de historial.
+    - **Al cargar la página**: Inmediatamente ejecuta la función `cargarHistorial`.
+    - **Petición de datos**: Dentro de `cargarHistorial`, usa `fetch` para hacer una petición `GET` a `http://localhost:3002/facturas`.
+    - **Recepción y Renderizado**: Cuando `server2.js` responde con la lista de facturas (el contenido de `server2.json`), el script recorre esta lista. Por cada factura:
+        1.  Crea el código HTML para un "item" de acordeón.
+        2.  En el encabezado del acordeón, muestra el número de cuenta, la fecha (formateada para ser más legible) y el total.
+        3.  Dentro del cuerpo colapsable del acordeón, crea una pequeña tabla con el detalle de los productos consumidos en esa cuenta.
+        4.  Añade este bloque de HTML al contenedor principal `#historial-cuentas`.
+    - **Manejo de errores**: Si no hay cuentas o si el servidor no responde, muestra un mensaje informativo al usuario.
+
+*   `server2.js` (Modificado): El servidor de facturas ahora es más versátil.
+    - **Petición `GET`**: Se ha añadido una nueva lógica. Si recibe una petición `GET` en la ruta `/facturas`, lee el archivo `server2.json` y devuelve su contenido. Esto es lo que permite a `cuentas.html` obtener el historial.
+    - **Petición `POST`**: Su funcionalidad original se mantiene. Sigue aceptando peticiones `POST` para guardar nuevas facturas cuando se finaliza un pedido en `index.html`.
+
+En resumen, `cuentas.html` y `js/cuentas.js` trabajan juntos para "preguntarle" a `server2.js` por todas las cuentas guardadas y luego las muestran de una manera clara y ordenada para el usuario.

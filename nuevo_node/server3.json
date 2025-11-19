@@ -1,0 +1,5 @@
+[
+    { "nombre": "Pisco Sour", "precio": 25.00 },
+    { "nombre": "Chilcano", "precio": 22.00 },
+    { "nombre": "Cerveza Pilsen", "precio": 12.00 }
+]

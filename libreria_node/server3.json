@@ -1,0 +1,50 @@
+[
+    {
+        "titulo": "Spider-Man: Into the Spider-Verse",
+        "tipo": "comic",
+        "edicion": "Vol. 1",
+        "precio": 18.00
+    },
+    {
+        "titulo": "Batman: The Dark Knight Returns",
+        "tipo": "comic",
+        "edicion": "Edición Especial",
+        "precio": 22.00
+    },
+    {
+        "titulo": "The Walking Dead",
+        "tipo": "comic",
+        "edicion": "Vol. 15",
+        "precio": 16.00
+    },
+    {
+        "titulo": "One Piece",
+        "tipo": "comic",
+        "edicion": "Vol. 95",
+        "precio": 15.00
+    },
+    {
+        "titulo": "National Geographic",
+        "tipo": "revista",
+        "edicion": "Noviembre 2025",
+        "precio": 12.00
+    },
+    {
+        "titulo": "Muy Interesante",
+        "tipo": "revista",
+        "edicion": "Diciembre 2025",
+        "precio": 10.00
+    },
+    {
+        "titulo": "Vogue",
+        "tipo": "revista",
+        "edicion": "Edición Especial",
+        "precio": 15.00
+    },
+    {
+        "titulo": "Time Magazine",
+        "tipo": "revista",
+        "edicion": "Noviembre 2025",
+        "precio": 8.00
+    }
+]
