@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BarberShop Pro - Tu Barbería de Confianza</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <!-- Navegación -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="logo">
+                <h1>⚔️ BarberShop Pro</h1>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="#inicio">Inicio</a></li>
+                <li><a href="#servicios">Servicios</a></li>
+                <li><a href="#barberos">Barberos</a></li>
+                <li><a href="#citas">Reservar Cita</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="inicio" class="hero">
+        <div class="hero-overlay">
+            <div class="hero-content">
+                <h2>Estilo que Define tu Personalidad</h2>
+                <p>Expertos en cortes clásicos y modernos desde 2020</p>
+                <a href="#citas" class="btn-primary">Reservar Ahora</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Sección de Servicios -->
+    <section id="servicios" class="servicios">
+        <div class="container">
+            <h2 class="section-title">Nuestros Servicios</h2>
+            <p class="section-subtitle">Ofrecemos lo mejor para tu imagen personal</p>
+
+            <div id="servicios-grid" class="servicios-grid">
+                <!-- Los servicios se cargan dinámicamente desde la BD -->
+                <div class="loading">Cargando servicios...</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Sección de Barberos -->
+    <section id="barberos" class="barberos">
+        <div class="container">
+            <h2 class="section-title">Nuestro Equipo</h2>
+            <p class="section-subtitle">Profesionales con años de experiencia</p>
+
+            <div id="barberos-grid" class="barberos-grid">
+                <!-- Los barberos se cargan dinámicamente desde la BD -->
+                <div class="loading">Cargando barberos...</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Sección de Reserva de Citas -->
+    <section id="citas" class="citas">
+        <div class="container">
+            <h2 class="section-title">Reserva tu Cita</h2>
+            <p class="section-subtitle">Agenda tu visita de forma rápida y sencilla</p>
+
+            <div class="cita-form-container">
+                <form id="form-cita" class="cita-form">
+                    <div class="form-group">
+                        <label for="nombre">Nombre Completo *</label>
+                        <input type="text" id="nombre" name="nombre" required placeholder="Ej: Juan Pérez">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="telefono">Teléfono *</label>
+                            <input type="tel" id="telefono" name="telefono" required placeholder="987654321">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" name="email" placeholder="correo@ejemplo.com">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="servicio">Servicio *</label>
+                            <select id="servicio" name="servicio" required>
+                                <option value="">Selecciona un servicio</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="barbero">Barbero *</label>
+                            <select id="barbero" name="barbero" required>
+                                <option value="">Selecciona un barbero</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="fecha">Fecha *</label>
+                            <input type="date" id="fecha" name="fecha" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="hora">Hora *</label>
+                            <input type="time" id="hora" name="hora" required min="10:00" max="20:00">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="comentarios">Comentarios adicionales</label>
+                        <textarea id="comentarios" name="comentarios" rows="3"
+                            placeholder="Alguna solicitud especial..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn-submit">Confirmar Reserva</button>
+                </form>
+
+                <div id="mensaje-resultado" class="mensaje-resultado"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>⚔️ BarberShop Pro</h3>
+                    <p>Tu estilo, nuestra pasión</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Horarios</h4>
+                    <p>Lunes - Sábado: 10:00 AM - 8:00 PM</p>
+                    <p>Domingos: 11:00 AM - 6:00 PM</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Contacto</h4>
+                    <p>📞 (01) 234-5678</p>
+                    <p>📧 info@barbershoppro.com</p>
+                    <p>📍 Av. Principal 123, Lima</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 BarberShop Pro. Sistema con Node.js + MySQL</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+</body>
+
+</html>
