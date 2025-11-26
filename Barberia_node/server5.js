@@ -169,7 +169,7 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(3005, () => {
-    console.log('🔶 Servidor 5 (HORARIOS) corriendo en http://localhost:3005');
+    console.log('Servidor 5 (HORARIOS) corriendo en http://localhost:3005');
     console.log('   GET  /horarios                     - Lista todos los horarios');
     console.log('   GET  /horarios/disponibles         - Solo horarios disponibles');
     console.log('   GET  /horarios/barbero/:id         - Horarios de un barbero');

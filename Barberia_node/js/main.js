@@ -9,7 +9,6 @@ document.addEventListener('DOMContentLoaded', () => {
     cargarServicios();
     cargarBarberos();
     cargarProductos();
-    cargarHorarios();
     cargarServiciosSelect();
     cargarBarberosSelect();
     configurarFormularioCita();
@@ -240,46 +239,6 @@ async function cargarProductos() {
     } catch (error) {
         console.error('Error al cargar productos:', error);
         grid.innerHTML = '<p class="loading" style="color: red;">Error al cargar productos.</p>';
-    }
-}
-
-// FUNCIONES PARA HORARIOS
-
-async function cargarHorarios() {
-    const lista = document.getElementById('horarios-lista');
-
-    try {
-        const response = await fetch(`${API_HORARIOS}/horarios`);
-        const horarios = await response.json();
-
-        if (horarios.length === 0) {
-            lista.innerHTML = '<p class="loading">No hay horarios disponibles</p>';
-            return;
-        }
-
-        // Agrupar por día
-        const horariosPorDia = {};
-        horarios.forEach(h => {
-            if (!horariosPorDia[h.dia_semana]) {
-                horariosPorDia[h.dia_semana] = [];
-            }
-            horariosPorDia[h.dia_semana].push(h);
-        });
-
-        lista.innerHTML = '<div class="horarios-container">' +
-            Object.keys(horariosPorDia).map(dia => `
-                <div class="horario-dia">
-                    <h3>${dia}</h3>
-                    ${horariosPorDia[dia].map(h => `
-                        <p>${h.hora_inicio.substring(0, 5)} - ${h.hora_fin.substring(0, 5)} 
-                        ${h.disponible ? '✅' : '❌'}</p>
-                    `).join('')}
-                </div>
-            `).join('') + '</div>';
-
-    } catch (error) {
-        console.error('Error al cargar horarios:', error);
-        lista.innerHTML = '<p class="loading" style="color: red;">Error al cargar horarios.</p>';
     }
 }
 
