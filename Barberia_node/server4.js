@@ -1,5 +1,4 @@
 // SERVIDOR 4 - PRODUCTOS (Puerto 3004)
-// Gestiona productos de barbería disponibles para venta
 const http = require('http');
 const mysql = require('mysql2');
 
@@ -7,7 +6,7 @@ const mysql = require('mysql2');
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: 'root', // Cambia según tu configuración
+    password: 'root', 
     database: 'barberia_db'
 });
 

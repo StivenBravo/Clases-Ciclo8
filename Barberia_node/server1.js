@@ -1,13 +1,10 @@
-// SERVIDOR 1 - SERVICIOS DE BARBERÍA (Puerto 3001)
-// Equivalente a server1.js (platos) pero para servicios de barbería
 const http = require('http');
 const mysql = require('mysql2');
-
 // Configuración de la base de datos
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: 'root', // Cambia según tu configuración
+    password: 'root', 
     database: 'barberia_db'
 });
 
@@ -32,7 +29,7 @@ const server = http.createServer((req, res) => {
         return;
     }
 
-    // GET /servicios - Obtener todos los servicios
+    // GET /servicios
     if (req.url === '/servicios' && req.method === 'GET') {
         const query = 'SELECT * FROM servicios ORDER BY precio ASC';
 

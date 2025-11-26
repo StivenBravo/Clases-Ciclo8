@@ -116,6 +116,8 @@ body {
 /* Secciones */
 .servicios,
 .barberos,
+.productos,
+.horarios,
 .citas {
     padding: 60px 0;
 }
@@ -126,6 +128,48 @@ body {
 
 .barberos {
     background-color: #f9f9f9;
+}
+
+.productos {
+    background-color: #fff;
+}
+
+.horarios {
+    background-color: #f9f9f9;
+}
+
+.horarios-lista {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.horarios-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-top: 2rem;
+}
+
+.horario-dia {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.horario-dia h3 {
+    color: #1a1a1a;
+    margin-bottom: 15px;
+    font-size: 1.2rem;
+    border-bottom: 2px solid #d4af37;
+    padding-bottom: 10px;
+}
+
+.horario-dia p {
+    color: #555;
+    margin: 8px 0;
+    font-size: 0.95rem;
 }
 
 .citas {

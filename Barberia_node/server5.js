@@ -1,5 +1,4 @@
 // SERVIDOR 5 - HORARIOS DISPONIBLES (Puerto 3005)
-// Gestiona horarios disponibles para reservas
 const http = require('http');
 const mysql = require('mysql2');
 
@@ -7,7 +6,7 @@ const mysql = require('mysql2');
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: 'root', // Cambia según tu configuración
+    password: 'root', 
     database: 'barberia_db'
 });
 

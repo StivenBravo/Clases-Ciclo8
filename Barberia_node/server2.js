@@ -1,5 +1,3 @@
-// SERVIDOR 2 - CITAS (Puerto 3002)
-// Equivalente a server2.js (facturas) pero para citas de barbería
 const http = require('http');
 const mysql = require('mysql2');
 
@@ -7,7 +5,7 @@ const mysql = require('mysql2');
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: 'root', // Cambia según tu configuración
+    password: 'root', 
     database: 'barberia_db'
 });
 

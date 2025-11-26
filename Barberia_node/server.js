@@ -29,8 +29,7 @@ db.connect((err) => {
     console.log('✓ Conectado a la base de datos MySQL');
 });
 
-// ============== ENDPOINTS DE SERVICIOS ==============
-
+// Endpoints
 // Obtener todos los servicios
 app.get('/api/servicios', (req, res) => {
     const query = 'SELECT * FROM servicios ORDER BY precio ASC';
@@ -59,7 +58,7 @@ app.get('/api/servicios/:id', (req, res) => {
     });
 });
 
-// ============== ENDPOINTS DE BARBEROS ==============
+// Endpoints Barberos 
 
 // Obtener todos los barberos activos
 app.get('/api/barberos', (req, res) => {
@@ -89,8 +88,7 @@ app.get('/api/barberos/:id', (req, res) => {
     });
 });
 
-// ============== ENDPOINTS DE CITAS ==============
-
+// Endpoints Citas
 // Obtener todas las citas
 app.get('/api/citas', (req, res) => {
     const query = `
@@ -177,7 +175,7 @@ app.put('/api/citas/:id/estado', (req, res) => {
     });
 });
 
-// ============== RUTA PRINCIPAL ==============
+// Ruta principal
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });

@@ -2,7 +2,7 @@
 const { spawn } = require('child_process');
 const path = require('path');
 
-console.log('🚀 Iniciando todos los servidores de la barbería...\n');
+console.log('Iniciando todos los servidores de la barbería...\n');
 
 // Iniciar servidor 1 (Servicios)
 const server1 = spawn('node', ['server1.js'], {
@@ -40,12 +40,10 @@ const serverMain = spawn('node', ['server.js'], {
     stdio: 'inherit'
 });
 
-console.log('\n✅ Todos los servidores iniciados (5 servicios + 1 interfaz web)\n');
-console.log('Presiona Ctrl+C para detener todos los servidores\n');
 
 // Manejar el cierre
 process.on('SIGINT', () => {
-    console.log('\n\n🛑 Deteniendo todos los servidores...');
+    console.log('\n\nDeteniendo todos los servidores...');
     server1.kill();
     server2.kill();
     server3.kill();

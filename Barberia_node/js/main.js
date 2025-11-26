@@ -1,26 +1,31 @@
-// Configuración de las APIs - Usando servidores separados (como tu ejemplo)
 const API_SERVICIOS = 'http://localhost:3001';  // Servidor 1 - Servicios
 const API_CITAS = 'http://localhost:3002';      // Servidor 2 - Citas
 const API_BARBEROS = 'http://localhost:3003';   // Servidor 3 - Barberos
+const API_PRODUCTOS = 'http://localhost:3004';  // Servidor 4 - Productos
+const API_HORARIOS = 'http://localhost:3005';   // Servidor 5 - Horarios
 
 // Cargar servicios al cargar la página
 document.addEventListener('DOMContentLoaded', () => {
     cargarServicios();
     cargarBarberos();
+    cargarProductos();
+    cargarHorarios();
     cargarServiciosSelect();
     cargarBarberosSelect();
     configurarFormularioCita();
     configurarFechaMinima();
 });
 
-// ============== FUNCIONES PARA SERVICIOS ==============
+// FUNCIONES PARA SERVICIOS
 
 async function cargarServicios() {
     const grid = document.getElementById('servicios-grid');
 
     try {
         const response = await fetch(`${API_SERVICIOS}/servicios`);
-        const servicios = await response.json(); if (servicios.length === 0) {
+        const servicios = await response.json();
+
+        if (servicios.length === 0) {
             grid.innerHTML = '<p class="loading">No hay servicios disponibles</p>';
             return;
         }
@@ -30,7 +35,7 @@ async function cargarServicios() {
                 <h3>${servicio.nombre}</h3>
                 <p>${servicio.descripcion}</p>
                 <div class="servicio-info">
-                    <span class="servicio-precio">S/ ${servicio.precio.toFixed(2)}</span>
+                    <span class="servicio-precio">S/ ${parseFloat(servicio.precio).toFixed(2)}</span>
                     <span class="servicio-duracion">⏱ ${servicio.duracion} min</span>
                 </div>
             </div>
@@ -42,7 +47,7 @@ async function cargarServicios() {
     }
 }
 
-// ============== FUNCIONES PARA BARBEROS ==============
+// FUNCIONES PARA BARBEROS
 
 async function cargarBarberos() {
     const grid = document.getElementById('barberos-grid');
@@ -71,7 +76,7 @@ async function cargarBarberos() {
     }
 }
 
-// ============== FUNCIONES PARA FORMULARIO DE CITAS ==============
+// FUNCIONES PARA EL FORMULARIO DE CITA
 
 async function cargarServiciosSelect() {
     const select = document.getElementById('servicio');
@@ -81,7 +86,7 @@ async function cargarServiciosSelect() {
         const servicios = await response.json(); servicios.forEach(servicio => {
             const option = document.createElement('option');
             option.value = servicio.id;
-            option.textContent = `${servicio.nombre} - S/ ${servicio.precio.toFixed(2)}`;
+            option.textContent = `${servicio.nombre} - S/ ${parseFloat(servicio.precio).toFixed(2)}`;
             select.appendChild(option);
         });
 
@@ -193,7 +198,7 @@ function configurarFormularioCita() {
     });
 }
 
-// ============== FUNCIONES AUXILIARES ==============
+// FUNCIONES AUXILIARES
 
 function formatearFecha(fechaString) {
     const fecha = new Date(fechaString);
@@ -205,6 +210,77 @@ function formatearFecha(fechaString) {
         minute: '2-digit'
     };
     return fecha.toLocaleDateString('es-ES', opciones);
+}
+
+// FUNCIONES PARA PRODUCTOS
+
+async function cargarProductos() {
+    const grid = document.getElementById('productos-grid');
+
+    try {
+        const response = await fetch(`${API_PRODUCTOS}/productos`);
+        const productos = await response.json();
+
+        if (productos.length === 0) {
+            grid.innerHTML = '<p class="loading">No hay productos disponibles</p>';
+            return;
+        }
+
+        grid.innerHTML = productos.map(producto => `
+            <div class="servicio-card">
+                <h3>${producto.nombre}</h3>
+                <p>${producto.descripcion}</p>
+                <div class="servicio-info">
+                    <span class="servicio-precio">S/ ${parseFloat(producto.precio).toFixed(2)}</span>
+                    <span class="servicio-duracion">Stock: ${producto.stock}</span>
+                </div>
+            </div>
+        `).join('');
+
+    } catch (error) {
+        console.error('Error al cargar productos:', error);
+        grid.innerHTML = '<p class="loading" style="color: red;">Error al cargar productos.</p>';
+    }
+}
+
+// FUNCIONES PARA HORARIOS
+
+async function cargarHorarios() {
+    const lista = document.getElementById('horarios-lista');
+
+    try {
+        const response = await fetch(`${API_HORARIOS}/horarios`);
+        const horarios = await response.json();
+
+        if (horarios.length === 0) {
+            lista.innerHTML = '<p class="loading">No hay horarios disponibles</p>';
+            return;
+        }
+
+        // Agrupar por día
+        const horariosPorDia = {};
+        horarios.forEach(h => {
+            if (!horariosPorDia[h.dia_semana]) {
+                horariosPorDia[h.dia_semana] = [];
+            }
+            horariosPorDia[h.dia_semana].push(h);
+        });
+
+        lista.innerHTML = '<div class="horarios-container">' +
+            Object.keys(horariosPorDia).map(dia => `
+                <div class="horario-dia">
+                    <h3>${dia}</h3>
+                    ${horariosPorDia[dia].map(h => `
+                        <p>${h.hora_inicio.substring(0, 5)} - ${h.hora_fin.substring(0, 5)} 
+                        ${h.disponible ? '✅' : '❌'}</p>
+                    `).join('')}
+                </div>
+            `).join('') + '</div>';
+
+    } catch (error) {
+        console.error('Error al cargar horarios:', error);
+        lista.innerHTML = '<p class="loading" style="color: red;">Error al cargar horarios.</p>';
+    }
 }
 
 // Scroll suave para los enlaces del menú
