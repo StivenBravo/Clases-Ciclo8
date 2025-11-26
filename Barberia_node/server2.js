@@ -12,7 +12,7 @@ const db = mysql.createConnection({
 // Conectar a la base de datos
 db.connect((err) => {
     if (err) {
-        console.error('❌ Error conectando a MySQL:', err);
+        console.error('Error conectando a MySQL:', err);
         process.exit(1);
     }
     console.log('✓ Servidor 2 conectado a MySQL');
@@ -114,7 +114,7 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(3002, () => {
-    console.log('🔶 Servidor 2 (CITAS) corriendo en http://localhost:3002');
+    console.log(' Servidor 2 (CITAS) corriendo en http://localhost:3002');
     console.log('   GET  /citas  - Lista todas las citas con detalles');
     console.log('   POST /citas  - Crea una nueva cita');
 });

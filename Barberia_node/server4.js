@@ -137,7 +137,7 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(3004, () => {
-    console.log('🔷 Servidor 4 (PRODUCTOS) corriendo en http://localhost:3004');
+    console.log(' Servidor 4 (PRODUCTOS) corriendo en http://localhost:3004');
     console.log('   GET  /productos                    - Lista todos los productos');
     console.log('   GET  /productos/categoria/:cat     - Filtra por categoría');
     console.log('   POST /productos                    - Agrega un nuevo producto');

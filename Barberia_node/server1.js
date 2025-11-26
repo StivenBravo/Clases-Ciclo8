@@ -11,7 +11,7 @@ const db = mysql.createConnection({
 // Conectar a la base de datos
 db.connect((err) => {
     if (err) {
-        console.error('❌ Error conectando a MySQL:', err);
+        console.error('Error conectando a MySQL:', err);
         process.exit(1);
     }
     console.log('✓ Servidor 1 conectado a MySQL');
@@ -88,7 +88,7 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(3001, () => {
-    console.log('🔷 Servidor 1 (SERVICIOS) corriendo en http://localhost:3001');
+    console.log(' Servidor 1 (SERVICIOS) corriendo en http://localhost:3001');
     console.log('   GET  /servicios  - Lista todos los servicios');
     console.log('   POST /servicios  - Agrega un nuevo servicio');
 });
