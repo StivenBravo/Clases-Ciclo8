@@ -16,7 +16,7 @@ app.use(express.static(__dirname));
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: 'root', // Cambia esto según tu configuración
+    password: 'root', 
     database: 'barberia_db'
 });
 
