@@ -129,6 +129,17 @@ app.post('/api/citas', async (req, res) => {
             return res.status(400).json({ success: false, message: 'Faltan campos requeridos' });
         }
 
+        // Validar horario de atención (8am a 6pm)
+        const fechaCita = new Date(fecha_cita);
+        const hora = fechaCita.getHours();
+        
+        if (hora < 8 || hora >= 18) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'El horario de atención es de 8:00 AM a 6:00 PM. Por favor, seleccione otra hora.' 
+            });
+        }
+
         // Verificar que la mascota existe
         const [mascota] = await pool.query('SELECT id FROM mascotas WHERE id = ? AND estado = "activo"', [mascota_id]);
         if (mascota.length === 0) {
@@ -178,6 +189,19 @@ app.post('/api/citas', async (req, res) => {
 app.put('/api/citas/:id', async (req, res) => {
     try {
         const { fecha_cita, motivo, tipo, estado, observaciones, costo } = req.body;
+
+        // Validar horario de atención si se está actualizando la fecha
+        if (fecha_cita) {
+            const fechaCita = new Date(fecha_cita);
+            const hora = fechaCita.getHours();
+            
+            if (hora < 8 || hora >= 18) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: 'El horario de atención es de 8:00 AM a 6:00 PM. Por favor, seleccione otra hora.' 
+                });
+            }
+        }
 
         const [result] = await pool.query(
             'UPDATE citas SET fecha_cita = COALESCE(?, fecha_cita), motivo = COALESCE(?, motivo), tipo = COALESCE(?, tipo), estado = COALESCE(?, estado), observaciones = ?, costo = ? WHERE id = ?',

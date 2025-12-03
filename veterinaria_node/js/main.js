@@ -1284,8 +1284,8 @@ async function mostrarModalCita(citaId = null) {
                                 value="${cita?.fecha_cita ? cita.fecha_cita.split('T')[0] : ''}" required>
                         </div>
                         <div class="form-group">
-                            <label>Hora *</label>
-                            <input type="time" id="hora_cita" 
+                            <label>Hora * (8:00 AM - 6:00 PM)</label>
+                            <input type="time" id="hora_cita" min="08:00" max="17:59"
                                 value="${cita?.fecha_cita ? new Date(cita.fecha_cita).toTimeString().slice(0, 5) : ''}" required>
                         </div>
                     </div>
@@ -1338,6 +1338,16 @@ async function guardarCita(event) {
     const fecha = document.getElementById('fecha_cita').value;
     const hora = document.getElementById('hora_cita').value;
     const fechaHora = `${fecha} ${hora}:00`;
+
+    // Validar horario (8:00 AM a 6:00 PM)
+    const [horaStr, minutoStr] = hora.split(':');
+    const horaNum = parseInt(horaStr);
+    const minutoNum = parseInt(minutoStr);
+
+    if (horaNum < 8 || horaNum >= 18) {
+        alert('⚠️ El horario de atención es de 8:00 AM a 6:00 PM.\nPor favor, selecciona un horario válido.');
+        return;
+    }
 
     // Obtener mascota_id del campo hidden si está editando, sino del select
     const mascotaIdElement = document.getElementById('mascota_id_hidden');
