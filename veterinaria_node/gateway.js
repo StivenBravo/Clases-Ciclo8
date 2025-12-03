@@ -18,6 +18,7 @@ app.use('/js', express.static(path.join(__dirname, 'js')));
 
 // URLs de los microservicios
 const SERVICES = {
+    auth: `http://localhost:${process.env.PORT_AUTH || 3006}`,
     clientes: `http://localhost:${process.env.PORT_CLIENTES || 3001}`,
     mascotas: `http://localhost:${process.env.PORT_MASCOTAS || 3002}`,
     citas: `http://localhost:${process.env.PORT_CITAS || 3003}`,
@@ -42,6 +43,11 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// Login page
+app.get('/login', (req, res) => {
+    res.sendFile(path.join(__dirname, 'login.html'));
+});
+
 // Health check
 app.get('/api/health', async (req, res) => {
     const dbConnected = await testConnection();
@@ -63,6 +69,22 @@ app.get('/api/health', async (req, res) => {
     }
 
     res.json(health);
+});
+
+// ============ PROXY PARA AUTENTICACIÓN ============
+app.all('/api/auth*', async (req, res) => {
+    try {
+        const response = await axios({
+            method: req.method,
+            url: `${SERVICES.auth}${req.originalUrl}`,
+            data: req.body,
+            params: req.query
+        });
+        res.status(response.status).json(response.data);
+    } catch (error) {
+        const status = error.response?.status || 500;
+        res.status(status).json(error.response?.data || handleServiceError(error, 'auth'));
+    }
 });
 
 // ============ PROXY PARA CLIENTES ============

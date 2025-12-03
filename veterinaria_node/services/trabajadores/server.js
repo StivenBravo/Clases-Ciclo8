@@ -140,7 +140,7 @@ app.delete('/api/trabajadores/:id', async (req, res) => {
 // GET - Listar todos los tratamientos
 app.get('/api/tratamientos', async (req, res) => {
     try {
-        const { mascota_id, estado } = req.query;
+        const { mascota_id, estado, tipo } = req.query;
         let query = `
             SELECT t.*, 
                    m.nombre as mascota_nombre, m.especie,
@@ -161,6 +161,10 @@ app.get('/api/tratamientos', async (req, res) => {
         if (estado) {
             query += ' AND t.estado = ?';
             params.push(estado);
+        }
+        if (tipo) {
+            query += ' AND t.tipo = ?';
+            params.push(tipo);
         }
 
         query += ' ORDER BY t.fecha_registro DESC';
@@ -218,16 +222,24 @@ app.get('/api/tratamientos/mascota/:mascotaId', async (req, res) => {
 // POST - Registrar nuevo tratamiento
 app.post('/api/tratamientos', async (req, res) => {
     try {
-        const { cita_id, mascota_id, veterinario_id, diagnostico, tratamiento, medicamentos, indicaciones, fecha_inicio, fecha_fin, costo } = req.body;
+        const { mascota_id, veterinario_id, tipo, enfermedad, vacuna, descripcion, fecha_inicio, fecha_proxima_visita, costo } = req.body;
 
         // Validar campos requeridos
-        if (!mascota_id || !veterinario_id || !diagnostico || !tratamiento || !fecha_inicio) {
+        if (!mascota_id || !veterinario_id || !tipo || !fecha_inicio) {
             return res.status(400).json({ success: false, message: 'Faltan campos requeridos' });
         }
 
+        if (tipo === 'enfermedad' && !enfermedad) {
+            return res.status(400).json({ success: false, message: 'Debe especificar la enfermedad' });
+        }
+
+        if (tipo === 'vacuna' && !vacuna) {
+            return res.status(400).json({ success: false, message: 'Debe especificar la vacuna' });
+        }
+
         const [result] = await pool.query(
-            'INSERT INTO tratamientos (cita_id, mascota_id, veterinario_id, diagnostico, tratamiento, medicamentos, indicaciones, fecha_inicio, fecha_fin, costo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [cita_id, mascota_id, veterinario_id, diagnostico, tratamiento, medicamentos, indicaciones, fecha_inicio, fecha_fin, costo]
+            'INSERT INTO tratamientos (mascota_id, veterinario_id, tipo, enfermedad, vacuna, descripcion, fecha_inicio, fecha_proxima_visita, costo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [mascota_id, veterinario_id, tipo, enfermedad, vacuna, descripcion, fecha_inicio, fecha_proxima_visita, costo]
         );
 
         res.status(201).json({
@@ -243,11 +255,11 @@ app.post('/api/tratamientos', async (req, res) => {
 // PUT - Actualizar tratamiento
 app.put('/api/tratamientos/:id', async (req, res) => {
     try {
-        const { diagnostico, tratamiento, medicamentos, indicaciones, fecha_fin, costo, estado } = req.body;
+        const { tipo, enfermedad, vacuna, descripcion, fecha_proxima_visita, costo, estado } = req.body;
 
         const [result] = await pool.query(
-            'UPDATE tratamientos SET diagnostico = ?, tratamiento = ?, medicamentos = ?, indicaciones = ?, fecha_fin = ?, costo = ?, estado = ? WHERE id = ?',
-            [diagnostico, tratamiento, medicamentos, indicaciones, fecha_fin, costo, estado, req.params.id]
+            'UPDATE tratamientos SET tipo = COALESCE(?, tipo), enfermedad = ?, vacuna = ?, descripcion = ?, fecha_proxima_visita = ?, costo = ?, estado = COALESCE(?, estado) WHERE id = ?',
+            [tipo, enfermedad, vacuna, descripcion, fecha_proxima_visita, costo, estado, req.params.id]
         );
 
         if (result.affectedRows === 0) {

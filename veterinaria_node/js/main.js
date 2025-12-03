@@ -8,7 +8,36 @@ let mascotas = [];
 let citas = [];
 let productos = [];
 let trabajadores = [];
+let veterinarios = [];
 let tratamientos = [];
+let currentUser = null;
+
+// Verificar sesión al cargar
+window.addEventListener('DOMContentLoaded', () => {
+    verificarSesion();
+});
+
+function verificarSesion() {
+    const userData = sessionStorage.getItem('user') || localStorage.getItem('user');
+
+    if (!userData) {
+        window.location.href = '/login';
+        return;
+    }
+
+    try {
+        currentUser = JSON.parse(userData);
+        document.getElementById('userName').textContent = currentUser.nombre_completo;
+    } catch (error) {
+        window.location.href = '/login';
+    }
+} function cerrarSesion() {
+    if (confirm('¿Estás seguro de cerrar sesión?')) {
+        sessionStorage.removeItem('user');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+    }
+}
 
 // Inicialización
 document.addEventListener('DOMContentLoaded', () => {
@@ -503,11 +532,12 @@ function mostrarTratamientos(tratamientosArray) {
         <table>
             <thead>
                 <tr>
+                    <th>Tipo</th>
                     <th>Mascota</th>
-                    <th>Cliente</th>
+                    <th>Tutor</th>
+                    <th>Enfermedad/Vacuna</th>
                     <th>Veterinario</th>
-                    <th>Diagnóstico</th>
-                    <th>Fecha Inicio</th>
+                    <th>Próxima Visita</th>
                     <th>Estado</th>
                     <th>Acciones</th>
                 </tr>
@@ -515,15 +545,19 @@ function mostrarTratamientos(tratamientosArray) {
             <tbody>
                 ${tratamientosArray.map(trat => `
                     <tr>
+                        <td><span class="badge badge-${trat.tipo === 'vacuna' ? 'info' : 'warning'}">${trat.tipo === 'vacuna' ? 'Vacuna' : 'Enfermedad'}</span></td>
                         <td>${trat.mascota_nombre}</td>
                         <td>${trat.nombres} ${trat.apellido_paterno}</td>
+                        <td>${trat.tipo === 'vacuna' ? trat.vacuna : trat.enfermedad}</td>
                         <td>Dr. ${trat.vet_nombres} ${trat.vet_apellidos}</td>
-                        <td>${trat.diagnostico.substring(0, 50)}...</td>
-                        <td>${formatDate(trat.fecha_inicio)}</td>
-                        <td><span class="badge badge-${trat.estado === 'completado' ? 'success' : 'info'}">${trat.estado}</span></td>
+                        <td>${trat.fecha_proxima_visita ? formatDate(trat.fecha_proxima_visita) : '-'}</td>
+                        <td><span class="badge badge-${trat.estado === 'completado' ? 'success' : 'info'}">${trat.estado === 'completado' ? 'Completado' : 'En Curso'}</span></td>
                         <td>
-                            <button class="btn btn-sm btn-primary" onclick="verTratamiento(${trat.id})">
-                                <i class="fas fa-eye"></i>
+                            <button class="btn btn-sm btn-warning" onclick="editarTratamiento(${trat.id})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="eliminarTratamiento(${trat.id})">
+                                <i class="fas fa-trash"></i>
                             </button>
                         </td>
                     </tr>
@@ -675,6 +709,16 @@ function setupFilters() {
             const categoria = e.target.value;
             const filtered = categoria ? productos.filter(p => p.categoria === categoria) : productos;
             mostrarProductos(filtered);
+        });
+    }
+
+    // Filtro de cargo de trabajadores
+    const filtroCargoTrabajadores = document.getElementById('filtroCargoTrabajadores');
+    if (filtroCargoTrabajadores) {
+        filtroCargoTrabajadores.addEventListener('change', (e) => {
+            const cargo = e.target.value;
+            const filtered = cargo ? trabajadores.filter(t => t.cargo === cargo) : trabajadores;
+            mostrarTrabajadores(filtered);
         });
     }
 }
@@ -1732,7 +1776,277 @@ async function guardarTrabajador(event, id) {
     }
 }
 
-function mostrarModalTratamiento() {
+function editarTratamiento(id) {
+    mostrarModalTratamiento(id);
+}
+
+async function eliminarTratamiento(id) {
+    if (!confirm('¿Está seguro de eliminar este tratamiento?')) return;
+
+    try {
+        const response = await fetch(`${API_URL}/tratamientos/${id}`, {
+            method: 'DELETE'
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            loadTratamientos();
+        } else {
+            alert('Error al eliminar el tratamiento');
+        }
+    } catch (error) {
+        console.error('Error al eliminar tratamiento:', error);
+        alert('Error al eliminar el tratamiento');
+    }
+}
+
+async function mostrarModalTratamiento(id = null) {
+    // Cargar clientes, mascotas y trabajadores si no están cargados
+    try {
+        if (clientes.length === 0) {
+            const responseClientes = await fetch(`${API_URL}/clientes`);
+            const dataClientes = await responseClientes.json();
+            clientes = dataClientes.data || [];
+        }
+
+        if (mascotas.length === 0) {
+            const responseMascotas = await fetch(`${API_URL}/mascotas`);
+            const dataMascotas = await responseMascotas.json();
+            mascotas = dataMascotas.data || [];
+        }
+
+        if (trabajadores.length === 0) {
+            const responseTrabajadores = await fetch(`${API_URL}/trabajadores`);
+            const dataTrabajadores = await responseTrabajadores.json();
+            trabajadores = dataTrabajadores.data || [];
+        }
+
+        // Filtrar solo veterinarios
+        veterinarios = trabajadores.filter(t => t.cargo === 'veterinario' && t.estado === 'activo');
+    } catch (error) {
+        console.error('Error al cargar datos:', error);
+        alert('Error al cargar los datos necesarios');
+        return;
+    }
+
+    const tratamiento = id ? tratamientos.find(t => t.id === id) : null;
+    const titulo = tratamiento ? 'Editar Tratamiento' : 'Nuevo Tratamiento';
+
+    // Si está editando, encontrar el cliente de la mascota
+    let clienteSeleccionado = null;
+    if (tratamiento) {
+        const mascotaTratamiento = mascotas.find(m => m.id === tratamiento.mascota_id);
+        if (mascotaTratamiento) {
+            clienteSeleccionado = mascotaTratamiento.cliente_id;
+        }
+    }
+
+    const modalHTML = `
+        <div class="modal-overlay" onclick="cerrarModal()">
+            <div class="modal-content" onclick="event.stopPropagation()">
+                <div class="modal-header">
+                    <h2>${titulo}</h2>
+                    <button class="modal-close" onclick="cerrarModal()">&times;</button>
+                </div>
+                <form onsubmit="guardarTratamiento(event, ${id})">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Tutor / Cliente *</label>
+                            <select id="cliente_id" required ${tratamiento ? 'disabled' : ''} onchange="filtrarMascotasPorCliente()">
+                                <option value="">Seleccione tutor</option>
+                                ${clientes.map(c => `
+                                    <option value="${c.id}" ${clienteSeleccionado === c.id ? 'selected' : ''}>
+                                        ${c.nombres} ${c.apellido_paterno} - ${c.dni}
+                                    </option>
+                                `).join('')}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Mascota *</label>
+                            <select id="mascota_id" required ${tratamiento ? 'disabled' : ''}>
+                                <option value="">Seleccione mascota</option>
+                            </select>
+                            ${tratamiento ? `<input type="hidden" id="mascota_id_hidden" value="${tratamiento.mascota_id}">` : ''}
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Veterinario Encargado *</label>
+                            <select id="veterinario_id" required>
+                                <option value="">Seleccione veterinario</option>
+                                ${veterinarios.map(v => `
+                                    <option value="${v.id}" ${tratamiento && tratamiento.veterinario_id === v.id ? 'selected' : ''}>
+                                        Dr. ${v.nombres} ${v.apellidos}${v.especialidad ? ' - ' + v.especialidad : ''}
+                                    </option>
+                                `).join('')}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Estado *</label>
+                            <select id="estado" required>
+                                <option value="en_curso" ${tratamiento?.estado === 'en_curso' ? 'selected' : ''}>En Curso</option>
+                                <option value="completado" ${tratamiento?.estado === 'completado' ? 'selected' : ''}>Completado</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Tipo *</label>
+                            <select id="tipo" required onchange="toggleTipoTratamiento()">
+                                <option value="">Seleccione tipo</option>
+                                <option value="enfermedad" ${tratamiento?.tipo === 'enfermedad' ? 'selected' : ''}>Enfermedad a Tratar</option>
+                                <option value="vacuna" ${tratamiento?.tipo === 'vacuna' ? 'selected' : ''}>Vacuna a Colocar</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row" id="row_enfermedad" style="display: ${tratamiento?.tipo === 'enfermedad' || !tratamiento ? 'flex' : 'none'}">
+                        <div class="form-group full-width">
+                            <label>Enfermedad a Tratar</label>
+                            <input type="text" id="enfermedad" value="${tratamiento?.enfermedad || ''}" 
+                                placeholder="Ej: Parasitosis, Dermatitis, Infección">
+                        </div>
+                    </div>
+                    <div class="form-row" id="row_vacuna" style="display: ${tratamiento?.tipo === 'vacuna' ? 'flex' : 'none'}">
+                        <div class="form-group full-width">
+                            <label>Vacuna a Colocar</label>
+                            <input type="text" id="vacuna" value="${tratamiento?.vacuna || ''}" 
+                                placeholder="Ej: Sextuple, Antirrábica, Triple Felina">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group full-width">
+                            <label>Descripción / Indicaciones</label>
+                            <textarea id="descripcion" rows="3" placeholder="Detalles adicionales, medicamentos, instrucciones...">${tratamiento?.descripcion || ''}</textarea>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Fecha Inicio *</label>
+                            <input type="date" id="fecha_inicio" 
+                                value="${tratamiento?.fecha_inicio ? tratamiento.fecha_inicio.split('T')[0] : ''}" 
+                                ${tratamiento ? 'readonly' : 'required'}>
+                        </div>
+                        <div class="form-group">
+                            <label>Próxima Visita (Cuándo Regresar)</label>
+                            <input type="date" id="fecha_proxima_visita" 
+                                value="${tratamiento?.fecha_proxima_visita ? tratamiento.fecha_proxima_visita.split('T')[0] : ''}">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Costo (S/)</label>
+                            <input type="number" id="costo" step="0.01" min="0" 
+                                value="${tratamiento?.costo || ''}">
+                        </div>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-secondary" onclick="cerrarModal()">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+
+    document.getElementById('modalContainer').innerHTML = modalHTML;
+
+    // Establecer fecha inicial si es nuevo
+    if (!tratamiento) {
+        const hoy = new Date().toISOString().split('T')[0];
+        document.getElementById('fecha_inicio').value = hoy;
+    } else {
+        // Si está editando, filtrar y seleccionar la mascota
+        filtrarMascotasPorCliente();
+    }
+}
+
+function filtrarMascotasPorCliente() {
+    const clienteId = document.getElementById('cliente_id').value;
+    const selectMascota = document.getElementById('mascota_id');
+    const mascotaActual = selectMascota.value; // Guardar selección actual si existe
+
+    // Limpiar opciones
+    selectMascota.innerHTML = '<option value="">Seleccione mascota</option>';
+
+    if (clienteId) {
+        // Filtrar mascotas del cliente seleccionado
+        const mascotasCliente = mascotas.filter(m => m.cliente_id == clienteId && m.estado === 'activo');
+
+        mascotasCliente.forEach(m => {
+            const option = document.createElement('option');
+            option.value = m.id;
+            option.textContent = `${m.nombre} (${m.especie} - ${m.raza})`;
+            if (m.id == mascotaActual) {
+                option.selected = true;
+            }
+            selectMascota.appendChild(option);
+        });
+
+        if (mascotasCliente.length === 0) {
+            selectMascota.innerHTML = '<option value="">No hay mascotas registradas para este tutor</option>';
+        }
+    }
+}
+
+function toggleTipoTratamiento() {
+    const tipo = document.getElementById('tipo').value;
+    const rowEnfermedad = document.getElementById('row_enfermedad');
+    const rowVacuna = document.getElementById('row_vacuna');
+
+    if (tipo === 'enfermedad') {
+        rowEnfermedad.style.display = 'flex';
+        rowVacuna.style.display = 'none';
+        document.getElementById('vacuna').value = '';
+    } else if (tipo === 'vacuna') {
+        rowEnfermedad.style.display = 'none';
+        rowVacuna.style.display = 'flex';
+        document.getElementById('enfermedad').value = '';
+    } else {
+        rowEnfermedad.style.display = 'none';
+        rowVacuna.style.display = 'none';
+    }
+}
+
+async function guardarTratamiento(event, id) {
+    event.preventDefault();
+
+    const tipo = document.getElementById('tipo').value;
+    const tratamientoData = {
+        mascota_id: id ? document.getElementById('mascota_id_hidden').value : document.getElementById('mascota_id').value,
+        veterinario_id: document.getElementById('veterinario_id').value,
+        tipo: tipo,
+        enfermedad: tipo === 'enfermedad' ? document.getElementById('enfermedad').value : null,
+        vacuna: tipo === 'vacuna' ? document.getElementById('vacuna').value : null,
+        descripcion: document.getElementById('descripcion').value,
+        fecha_inicio: document.getElementById('fecha_inicio').value,
+        fecha_proxima_visita: document.getElementById('fecha_proxima_visita').value || null,
+        costo: parseFloat(document.getElementById('costo').value) || null,
+        estado: document.getElementById('estado').value
+    };
+
+    try {
+        const url = id ? `${API_URL}/tratamientos/${id}` : `${API_URL}/tratamientos`;
+        const method = id ? 'PUT' : 'POST';
+
+        const response = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(tratamientoData)
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            cerrarModal();
+            loadTratamientos();
+        } else {
+            alert(data.message || 'Error al guardar el tratamiento');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al guardar el tratamiento');
+    }
 }
 
 function cerrarModal() {

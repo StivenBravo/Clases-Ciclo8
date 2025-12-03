@@ -8,6 +8,7 @@ console.log('========================================\n');
 // Lista de servicios a iniciar
 const services = [
     { name: 'Gateway', script: 'gateway.js', port: 3000 },
+    { name: 'Auth', script: 'services/auth/server.js', port: 3006 },
     { name: 'Clientes', script: 'services/clientes/server.js', port: 3001 },
     { name: 'Mascotas', script: 'services/mascotas/server.js', port: 3002 },
     { name: 'Citas', script: 'services/citas/server.js', port: 3003 },

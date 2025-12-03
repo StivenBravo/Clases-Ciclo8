@@ -4,6 +4,19 @@
 CREATE DATABASE IF NOT EXISTS veterinaria_db;
 USE veterinaria_db;
 
+-- Tabla de Usuarios
+CREATE TABLE usuarios (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    nombre_completo VARCHAR(150) NOT NULL,
+    rol ENUM('admin', 'veterinario', 'recepcionista') DEFAULT 'recepcionista',
+    estado ENUM('activo', 'inactivo') DEFAULT 'activo',
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ultimo_acceso TIMESTAMP NULL,
+    INDEX idx_username (username)
+);
+
 -- Tabla de Clientes
 CREATE TABLE clientes (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -74,19 +87,17 @@ CREATE TABLE citas (
 -- Tabla de Tratamientos
 CREATE TABLE tratamientos (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    cita_id INT NOT NULL,
     mascota_id INT NOT NULL,
     veterinario_id INT NOT NULL,
-    diagnostico TEXT NOT NULL,
-    tratamiento TEXT NOT NULL,
-    medicamentos TEXT,
-    indicaciones TEXT,
+    tipo ENUM('enfermedad', 'vacuna') NOT NULL DEFAULT 'enfermedad',
+    enfermedad VARCHAR(200),
+    vacuna VARCHAR(200),
+    descripcion TEXT,
     fecha_inicio DATE NOT NULL,
-    fecha_fin DATE,
+    fecha_proxima_visita DATE,
     costo DECIMAL(10,2),
-    estado ENUM('en_curso', 'completado', 'suspendido') DEFAULT 'en_curso',
+    estado ENUM('en_curso', 'completado') DEFAULT 'en_curso',
     fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (cita_id) REFERENCES citas(id),
     FOREIGN KEY (mascota_id) REFERENCES mascotas(id) ON DELETE CASCADE,
     FOREIGN KEY (veterinario_id) REFERENCES trabajadores(id),
     INDEX idx_mascota (mascota_id)
