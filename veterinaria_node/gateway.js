@@ -1,0 +1,187 @@
+const express = require('express');
+const cors = require('cors');
+const axios = require('axios');
+const path = require('path');
+const { testConnection } = require('./config/database');
+require('dotenv').config();
+
+const app = express();
+const PORT = process.env.PORT_GATEWAY || 3000;
+
+app.use(cors());
+app.use(express.json());
+
+// Servir archivos estáticos
+app.use(express.static(path.join(__dirname, 'public')));
+app.use('/css', express.static(path.join(__dirname, 'css')));
+app.use('/js', express.static(path.join(__dirname, 'js')));
+
+// URLs de los microservicios
+const SERVICES = {
+    clientes: `http://localhost:${process.env.PORT_CLIENTES || 3001}`,
+    mascotas: `http://localhost:${process.env.PORT_MASCOTAS || 3002}`,
+    citas: `http://localhost:${process.env.PORT_CITAS || 3003}`,
+    productos: `http://localhost:${process.env.PORT_PRODUCTOS || 3004}`,
+    trabajadores: `http://localhost:${process.env.PORT_TRABAJADORES || 3005}`
+};
+
+// Middleware para manejar errores de servicios
+const handleServiceError = (error, serviceName) => {
+    console.error(`❌ Error en servicio ${serviceName}:`, error.message);
+    return {
+        success: false,
+        message: `El servicio de ${serviceName} no está disponible`,
+        error: error.message
+    };
+};
+
+// ============ RUTAS DEL GATEWAY ============
+
+// Página principal
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// Health check
+app.get('/api/health', async (req, res) => {
+    const dbConnected = await testConnection();
+    const health = {
+        status: 'OK',
+        timestamp: new Date().toISOString(),
+        database: dbConnected ? 'Connected' : 'Disconnected',
+        services: {}
+    };
+
+    // Verificar estado de cada servicio
+    for (const [name, url] of Object.entries(SERVICES)) {
+        try {
+            await axios.get(`${url}/api/health`, { timeout: 2000 });
+            health.services[name] = 'UP';
+        } catch (error) {
+            health.services[name] = 'DOWN';
+        }
+    }
+
+    res.json(health);
+});
+
+// ============ PROXY PARA CLIENTES ============
+app.all('/api/clientes*', async (req, res) => {
+    try {
+        const response = await axios({
+            method: req.method,
+            url: `${SERVICES.clientes}${req.originalUrl}`,
+            data: req.body,
+            params: req.query
+        });
+        res.status(response.status).json(response.data);
+    } catch (error) {
+        const status = error.response?.status || 500;
+        res.status(status).json(error.response?.data || handleServiceError(error, 'clientes'));
+    }
+});
+
+// ============ PROXY PARA MASCOTAS ============
+app.all('/api/mascotas*', async (req, res) => {
+    try {
+        const response = await axios({
+            method: req.method,
+            url: `${SERVICES.mascotas}${req.originalUrl}`,
+            data: req.body,
+            params: req.query
+        });
+        res.status(response.status).json(response.data);
+    } catch (error) {
+        const status = error.response?.status || 500;
+        res.status(status).json(error.response?.data || handleServiceError(error, 'mascotas'));
+    }
+});
+
+// ============ PROXY PARA CITAS ============
+app.all('/api/citas*', async (req, res) => {
+    try {
+        const response = await axios({
+            method: req.method,
+            url: `${SERVICES.citas}${req.originalUrl}`,
+            data: req.body,
+            params: req.query
+        });
+        res.status(response.status).json(response.data);
+    } catch (error) {
+        const status = error.response?.status || 500;
+        res.status(status).json(error.response?.data || handleServiceError(error, 'citas'));
+    }
+});
+
+// ============ PROXY PARA PRODUCTOS ============
+app.all('/api/productos*', async (req, res) => {
+    try {
+        const response = await axios({
+            method: req.method,
+            url: `${SERVICES.productos}${req.originalUrl}`,
+            data: req.body,
+            params: req.query
+        });
+        res.status(response.status).json(response.data);
+    } catch (error) {
+        const status = error.response?.status || 500;
+        res.status(status).json(error.response?.data || handleServiceError(error, 'productos'));
+    }
+});
+
+// ============ PROXY PARA TRABAJADORES Y TRATAMIENTOS ============
+app.all('/api/trabajadores*', async (req, res) => {
+    try {
+        const response = await axios({
+            method: req.method,
+            url: `${SERVICES.trabajadores}${req.originalUrl}`,
+            data: req.body,
+            params: req.query
+        });
+        res.status(response.status).json(response.data);
+    } catch (error) {
+        const status = error.response?.status || 500;
+        res.status(status).json(error.response?.data || handleServiceError(error, 'trabajadores'));
+    }
+});
+
+app.all('/api/tratamientos*', async (req, res) => {
+    try {
+        const response = await axios({
+            method: req.method,
+            url: `${SERVICES.trabajadores}${req.originalUrl}`,
+            data: req.body,
+            params: req.query
+        });
+        res.status(response.status).json(response.data);
+    } catch (error) {
+        const status = error.response?.status || 500;
+        res.status(status).json(error.response?.data || handleServiceError(error, 'tratamientos'));
+    }
+});
+
+// Ruta 404
+app.use((req, res) => {
+    res.status(404).json({
+        success: false,
+        message: 'Ruta no encontrada'
+    });
+});
+
+// Iniciar Gateway
+app.listen(PORT, async () => {
+    console.log('\n🏥 ========================================');
+    console.log('   SISTEMA DE GESTIÓN VETERINARIA');
+    console.log('========================================');
+    console.log(`🌐 Gateway corriendo en http://localhost:${PORT}`);
+    console.log('📋 Servicios configurados:');
+    console.log(`   - Clientes:     ${SERVICES.clientes}`);
+    console.log(`   - Mascotas:     ${SERVICES.mascotas}`);
+    console.log(`   - Citas:        ${SERVICES.citas}`);
+    console.log(`   - Productos:    ${SERVICES.productos}`);
+    console.log(`   - Trabajadores: ${SERVICES.trabajadores}`);
+    console.log('========================================\n');
+
+    await testConnection();
+    console.log('\n✅ Gateway iniciado correctamente\n');
+});

@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestión Veterinaria</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <i class="fas fa-paw"></i>
+            <h2>Veterinaria</h2>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-item active" data-section="dashboard">
+                <i class="fas fa-chart-line"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="#" class="nav-item" data-section="clientes">
+                <i class="fas fa-users"></i>
+                <span>Clientes</span>
+            </a>
+            <a href="#" class="nav-item" data-section="mascotas">
+                <i class="fas fa-dog"></i>
+                <span>Mascotas</span>
+            </a>
+            <a href="#" class="nav-item" data-section="citas">
+                <i class="fas fa-calendar-check"></i>
+                <span>Citas</span>
+            </a>
+            <a href="#" class="nav-item" data-section="productos">
+                <i class="fas fa-box"></i>
+                <span>Productos</span>
+            </a>
+            <a href="#" class="nav-item" data-section="trabajadores">
+                <i class="fas fa-user-md"></i>
+                <span>Trabajadores</span>
+            </a>
+            <a href="#" class="nav-item" data-section="tratamientos">
+                <i class="fas fa-notes-medical"></i>
+                <span>Tratamientos</span>
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <button class="btn-menu" id="btnMenu">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1 id="pageTitle">Dashboard</h1>
+            </div>
+            <div class="header-right">
+                <button class="btn-icon">
+                    <i class="fas fa-bell"></i>
+                </button>
+                <div class="user-profile">
+                    <i class="fas fa-user-circle"></i>
+                    <span>Administrador</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content Area -->
+        <div class="content">
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="section active">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon blue">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="totalClientes">0</h3>
+                            <p>Clientes Activos</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon green">
+                            <i class="fas fa-dog"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="totalMascotas">0</h3>
+                            <p>Mascotas Registradas</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon orange">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="citasHoy">0</h3>
+                            <p>Citas Hoy</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon purple">
+                            <i class="fas fa-box"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="totalProductos">0</h3>
+                            <p>Productos</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-content">
+                    <div class="card">
+                        <h3>Citas del Día</h3>
+                        <div id="citasDelDia" class="table-container">
+                            <p class="loading">Cargando...</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Clientes Section -->
+            <section id="clientes" class="section">
+                <div class="section-header">
+                    <h2>Gestión de Clientes</h2>
+                    <button class="btn btn-primary" onclick="mostrarModalCliente()">
+                        <i class="fas fa-plus"></i> Nuevo Cliente
+                    </button>
+                </div>
+                <div class="card">
+                    <div class="search-box">
+                        <input type="text" id="buscarCliente" placeholder="Buscar por DNI, nombre o apellido...">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <div id="tablaClientes" class="table-container">
+                        <p class="loading">Cargando...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Mascotas Section -->
+            <section id="mascotas" class="section">
+                <div class="section-header">
+                    <h2>Gestión de Mascotas</h2>
+                    <button class="btn btn-primary" onclick="mostrarModalMascota()">
+                        <i class="fas fa-plus"></i> Nueva Mascota
+                    </button>
+                </div>
+                <div class="card">
+                    <div class="search-box">
+                        <input type="text" id="buscarMascota" placeholder="Buscar mascota...">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <div id="tablaMascotas" class="table-container">
+                        <p class="loading">Cargando...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Citas Section -->
+            <section id="citas" class="section">
+                <div class="section-header">
+                    <h2>Gestión de Citas</h2>
+                    <button class="btn btn-primary" onclick="mostrarModalCita()">
+                        <i class="fas fa-plus"></i> Nueva Cita
+                    </button>
+                </div>
+                <div class="card">
+                    <div class="filters">
+                        <input type="date" id="filtroCitas" class="filter-input">
+                        <select id="filtroEstadoCitas" class="filter-input">
+                            <option value="">Todos los estados</option>
+                            <option value="reserva">Reserva</option>
+                            <option value="atendida">Atendida</option>
+                            <option value="cancelada">Cancelada</option>
+                        </select>
+                    </div>
+                    <div id="tablaCitas" class="table-container">
+                        <p class="loading">Cargando...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Productos Section -->
+            <section id="productos" class="section">
+                <div class="section-header">
+                    <h2>Gestión de Productos</h2>
+                    <button class="btn btn-primary" onclick="mostrarModalProducto()">
+                        <i class="fas fa-plus"></i> Nuevo Producto
+                    </button>
+                </div>
+                <div class="card">
+                    <div class="filters">
+                        <select id="filtroCategoriaProductos" class="filter-input">
+                            <option value="">Todas las categorías</option>
+                            <option value="alimento">Alimento</option>
+                            <option value="medicamento">Medicamento</option>
+                            <option value="accesorio">Accesorio</option>
+                            <option value="higiene">Higiene</option>
+                            <option value="juguete">Juguete</option>
+                            <option value="otro">Otro</option>
+                        </select>
+                    </div>
+                    <div id="tablaProductos" class="table-container">
+                        <p class="loading">Cargando...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Trabajadores Section -->
+            <section id="trabajadores" class="section">
+                <div class="section-header">
+                    <h2>Gestión de Trabajadores</h2>
+                    <button class="btn btn-primary" onclick="mostrarModalTrabajador()">
+                        <i class="fas fa-plus"></i> Nuevo Trabajador
+                    </button>
+                </div>
+                <div class="card">
+                    <div class="filters">
+                        <select id="filtroCargoTrabajadores" class="filter-input">
+                            <option value="">Todos los cargos</option>
+                            <option value="veterinario">Veterinario</option>
+                            <option value="asistente">Asistente</option>
+                            <option value="recepcionista">Recepcionista</option>
+                            <option value="administrador">Administrador</option>
+                        </select>
+                    </div>
+                    <div id="tablaTrabajadores" class="table-container">
+                        <p class="loading">Cargando...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tratamientos Section -->
+            <section id="tratamientos" class="section">
+                <div class="section-header">
+                    <h2>Gestión de Tratamientos</h2>
+                    <button class="btn btn-primary" onclick="mostrarModalTratamiento()">
+                        <i class="fas fa-plus"></i> Nuevo Tratamiento
+                    </button>
+                </div>
+                <div class="card">
+                    <div id="tablaTratamientos" class="table-container">
+                        <p class="loading">Cargando...</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Modal Container -->
+    <div id="modalContainer"></div>
+
+    <script src="js/main.js"></script>
+</body>
+
+</html>

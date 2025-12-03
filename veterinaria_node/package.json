@@ -1,0 +1,35 @@
+{
+    "name": "veterinaria-node",
+    "version": "1.0.0",
+    "description": "Sistema de gestión para veterinaria con microservicios",
+    "main": "gateway.js",
+    "scripts": {
+        "start": "node gateway.js",
+        "dev": "nodemon gateway.js",
+        "setup": "node setup-database.js",
+        "service:clientes": "node services/clientes/server.js",
+        "service:mascotas": "node services/mascotas/server.js",
+        "service:citas": "node services/citas/server.js",
+        "service:productos": "node services/productos/server.js",
+        "service:trabajadores": "node services/trabajadores/server.js",
+        "start:all": "node iniciar-todos.js"
+    },
+    "keywords": [
+        "veterinaria",
+        "node",
+        "microservicios"
+    ],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "express": "^4.18.2",
+        "mysql2": "^3.6.5",
+        "cors": "^2.8.5",
+        "body-parser": "^1.20.2",
+        "axios": "^1.6.2",
+        "dotenv": "^16.3.1"
+    },
+    "devDependencies": {
+        "nodemon": "^3.0.2"
+    }
+}
