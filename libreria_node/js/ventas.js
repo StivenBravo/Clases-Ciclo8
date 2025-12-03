@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             const ventas = await response.json();
 
-            historialContainer.innerHTML = ''; // Limpiar el mensaje de "cargando"
+            historialContainer.innerHTML = ''; 
 
             if (ventas.length === 0) {
                 historialContainer.innerHTML = '<div class="alert alert-info">No hay ventas registradas en el historial.</div>';

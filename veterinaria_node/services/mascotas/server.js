@@ -155,5 +155,5 @@ app.get('/api/mascotas/stats/general', async (req, res) => {
 
 // Iniciar servidor
 app.listen(PORT, () => {
-    console.log(`🟢 Servicio de Mascotas corriendo en http://localhost:${PORT}`);
+    console.log(`Servicio de Mascotas corriendo en http://localhost:${PORT}`);
 });

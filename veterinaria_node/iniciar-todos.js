@@ -1,9 +1,6 @@
 const { spawn } = require('child_process');
 const path = require('path');
-
-console.log('\n🏥 ========================================');
 console.log('   INICIANDO TODOS LOS SERVICIOS');
-console.log('========================================\n');
 
 // Lista de servicios a iniciar
 const services = [
@@ -29,17 +26,17 @@ function startService(service) {
     });
 
     proc.on('error', (error) => {
-        console.error(`❌ Error al iniciar ${service.name}:`, error.message);
+        console.error(`Error al iniciar ${service.name}:`, error.message);
     });
 
     proc.on('exit', (code) => {
         if (code !== 0) {
-            console.log(`⚠️ ${service.name} terminó con código ${code}`);
+            console.log(`${service.name} terminó con código ${code}`);
         }
     });
 
     processes.push({ name: service.name, process: proc });
-    console.log(`✅ ${service.name} iniciado en puerto ${service.port}`);
+    console.log(`${service.name} iniciado en puerto ${service.port}`);
 }
 
 // Iniciar todos los servicios
@@ -47,21 +44,18 @@ services.forEach(service => {
     startService(service);
 });
 
-console.log('\n========================================');
-console.log('✅ Todos los servicios iniciados');
-console.log('========================================');
-console.log('\n📝 Presiona Ctrl+C para detener todos los servicios\n');
+console.log('Todos los servicios iniciados');
 
 // Manejar la señal de terminación
 process.on('SIGINT', () => {
-    console.log('\n\n🛑 Deteniendo todos los servicios...\n');
+    console.log('Deteniendo todos los servicios...\n');
 
     processes.forEach(({ name, process }) => {
-        console.log(`   ⏹️ Deteniendo ${name}...`);
+        console.log(`Deteniendo ${name}...`);
         process.kill();
     });
 
-    console.log('\n✅ Todos los servicios detenidos\n');
+    console.log('Todos los servicios detenidos\n');
     process.exit(0);
 });
 

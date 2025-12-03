@@ -28,7 +28,7 @@ const SERVICES = {
 
 // Middleware para manejar errores de servicios
 const handleServiceError = (error, serviceName) => {
-    console.error(`❌ Error en servicio ${serviceName}:`, error.message);
+    console.error(`Error en servicio ${serviceName}:`, error.message);
     return {
         success: false,
         message: `El servicio de ${serviceName} no está disponible`,
@@ -36,8 +36,7 @@ const handleServiceError = (error, serviceName) => {
     };
 };
 
-// ============ RUTAS DEL GATEWAY ============
-
+// Rutas principales
 // Página principal
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
@@ -71,7 +70,7 @@ app.get('/api/health', async (req, res) => {
     res.json(health);
 });
 
-// ============ PROXY PARA AUTENTICACIÓN ============
+// Proxies para microservicios
 app.all('/api/auth*', async (req, res) => {
     try {
         const response = await axios({
@@ -87,7 +86,7 @@ app.all('/api/auth*', async (req, res) => {
     }
 });
 
-// ============ PROXY PARA CLIENTES ============
+// Proxy para clientes
 app.all('/api/clientes*', async (req, res) => {
     try {
         const response = await axios({
@@ -103,7 +102,7 @@ app.all('/api/clientes*', async (req, res) => {
     }
 });
 
-// ============ PROXY PARA MASCOTAS ============
+// Proxy para mascotas
 app.all('/api/mascotas*', async (req, res) => {
     try {
         const response = await axios({
@@ -119,7 +118,7 @@ app.all('/api/mascotas*', async (req, res) => {
     }
 });
 
-// ============ PROXY PARA CITAS ============
+// Proxy para citas
 app.all('/api/citas*', async (req, res) => {
     try {
         const response = await axios({
@@ -135,7 +134,7 @@ app.all('/api/citas*', async (req, res) => {
     }
 });
 
-// ============ PROXY PARA PRODUCTOS ============
+// Proxy para productos
 app.all('/api/productos*', async (req, res) => {
     try {
         const response = await axios({
@@ -151,7 +150,7 @@ app.all('/api/productos*', async (req, res) => {
     }
 });
 
-// ============ PROXY PARA TRABAJADORES Y TRATAMIENTOS ============
+// Proxy para trabajadores y tratamientos
 app.all('/api/trabajadores*', async (req, res) => {
     try {
         const response = await axios({
@@ -192,18 +191,13 @@ app.use((req, res) => {
 
 // Iniciar Gateway
 app.listen(PORT, async () => {
-    console.log('\n🏥 ========================================');
-    console.log('   SISTEMA DE GESTIÓN VETERINARIA');
-    console.log('========================================');
-    console.log(`🌐 Gateway corriendo en http://localhost:${PORT}`);
-    console.log('📋 Servicios configurados:');
+    console.log(`Gateway corriendo en http://localhost:${PORT}`);
+    console.log('Servicios configurados:');
     console.log(`   - Clientes:     ${SERVICES.clientes}`);
     console.log(`   - Mascotas:     ${SERVICES.mascotas}`);
     console.log(`   - Citas:        ${SERVICES.citas}`);
     console.log(`   - Productos:    ${SERVICES.productos}`);
     console.log(`   - Trabajadores: ${SERVICES.trabajadores}`);
-    console.log('========================================\n');
-
     await testConnection();
-    console.log('\n✅ Gateway iniciado correctamente\n');
+    console.log('\nGateway iniciado correctamente\n');
 });

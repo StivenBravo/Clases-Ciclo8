@@ -1,1 +1,22 @@
-[]
+[
+    {
+        "subtotal": 34,
+        "igv": 6.12,
+        "total": 40.12,
+        "fecha": "2025-11-26T19:33:28.594Z",
+        "items": [
+            {
+                "titulo": "National Geographic",
+                "precio": 12,
+                "tipo": "revista",
+                "autor": ""
+            },
+            {
+                "titulo": "Batman: The Dark Knight Returns",
+                "precio": 22,
+                "tipo": "comic",
+                "autor": ""
+            }
+        ]
+    }
+]

@@ -220,5 +220,5 @@ app.get('/api/productos/stats/general', async (req, res) => {
 
 // Iniciar servidor
 app.listen(PORT, () => {
-    console.log(`🟢 Servicio de Productos corriendo en http://localhost:${PORT}`);
+    console.log(`Servicio de Productos corriendo en http://localhost:${PORT}`);
 });

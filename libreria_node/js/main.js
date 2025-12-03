@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let carritoActual = [];
     const IGV_RATE = 0.18;
 
-    // --- FUNCIONES DE CARGA DE DATOS ---
+    // Carga datos
     const cargarCatalogoLibros = async () => {
         try {
             const response = await fetch(`${API_SERVER1_URL}/libros`);
@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
 
-    // Renderiza una lista de items (libros, comics o revistas) en su contenedor
+    // Renderizacion
     const renderizarCatalogo = (items, container, tipo) => {
         if (items.length === 0) {
             container.innerHTML = `<p class="text-muted">No hay ${tipo}s disponibles en este momento.</p>`;
@@ -104,8 +104,6 @@ document.addEventListener('DOMContentLoaded', () => {
         igvElem.textContent = `S/. ${igv.toFixed(2)}`;
         totalElem.textContent = `S/. ${total.toFixed(2)}`;
     };
-
-    // --- MANEJADORES DE EVENTOS ---
 
     // Añadir un nuevo libro
     formNuevoLibro.addEventListener('submit', async (e) => {

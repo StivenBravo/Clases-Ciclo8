@@ -142,5 +142,5 @@ app.put('/api/auth/change-password', async (req, res) => {
 
 // Iniciar servidor
 app.listen(PORT, () => {
-    console.log(`🔐 Servicio de Autenticación corriendo en http://localhost:${PORT}`);
+    console.log(`Servicio de Autenticación corriendo en http://localhost:${PORT}`);
 });

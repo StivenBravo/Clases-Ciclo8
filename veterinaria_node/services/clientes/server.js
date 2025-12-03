@@ -18,14 +18,36 @@ app.get('/api/health', (req, res) => {
 // Función para consultar API de RENIEC
 async function consultarReniec(dni) {
     try {
-        const response = await axios.get(`${process.env.RENIEC_API_URL}?numero=${dni}`, {
-            headers: {
-                'Authorization': `Bearer ${process.env.RENIEC_API_TOKEN}`
+        console.log('Consultando RENIEC para DNI:', dni);
+        
+        // Se usa la api.decolecta.com 
+        if (process.env.RENIEC_API_TOKEN && process.env.RENIEC_API_TOKEN.trim() !== '') {
+            try {
+                const response = await axios.get(`https://api.decolecta.com/v1/reniec/dni?numero=${dni}`, {
+                    headers: {
+                        'Authorization': `Bearer ${process.env.RENIEC_API_TOKEN}`
+                    },
+                    timeout: 10000
+                });
+                
+                if (response.data) {
+                    console.log('Respuesta RENIEC exitosa:', response.data);
+                    return {
+                        nombres: response.data.first_name,
+                        apellidoPaterno: response.data.first_last_name,
+                        apellidoMaterno: response.data.second_last_name
+                    };
+                }
+            } catch (err) {
+                console.error('Error con decolecta:', err.response?.data || err.message);
             }
-        });
-        return response.data;
+        } else {
+            console.log('Token de RENIEC no configurado');
+        }
+        
+        return null;
     } catch (error) {
-        console.log('⚠️ API RENIEC no disponible, continuando sin validación');
+        console.error('Error consultando RENIEC:', error.message);
         return null;
     }
 }
@@ -81,14 +103,15 @@ app.post('/api/clientes/validar-dni', async (req, res) => {
 
         const datosReniec = await consultarReniec(dni);
 
-        if (datosReniec) {
+        if (datosReniec && datosReniec.nombres) {
+            // Manejar diferentes estructuras de respuesta de la API
             res.json({
                 success: true,
                 data: {
                     dni: dni,
                     nombres: datosReniec.nombres,
-                    apellido_paterno: datosReniec.apellidoPaterno,
-                    apellido_materno: datosReniec.apellidoMaterno
+                    apellidoPaterno: datosReniec.apellidoPaterno || datosReniec.apellido_paterno,
+                    apellidoMaterno: datosReniec.apellidoMaterno || datosReniec.apellido_materno
                 }
             });
         } else {
@@ -98,6 +121,7 @@ app.post('/api/clientes/validar-dni', async (req, res) => {
             });
         }
     } catch (error) {
+        console.error('Error en validar-dni:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 });
@@ -170,5 +194,5 @@ app.delete('/api/clientes/:id', async (req, res) => {
 
 // Iniciar servidor
 app.listen(PORT, () => {
-    console.log(`🟢 Servicio de Clientes corriendo en http://localhost:${PORT}`);
+    console.log(`Servicio de Clientes corriendo en http://localhost:${PORT}`);
 });

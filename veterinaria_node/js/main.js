@@ -130,7 +130,7 @@ async function loadSectionData(section) {
     }
 }
 
-// ========== DASHBOARD ==========
+// DASHBOARD
 async function loadDashboard() {
     try {
         // Cargar estadísticas
@@ -194,15 +194,30 @@ function mostrarCitasDelDia(citas) {
     container.innerHTML = html;
 }
 
-// ========== CLIENTES ==========
+// CLIENTES
 async function loadClientes() {
     try {
         const response = await fetch(`${API_URL}/clientes`);
+        
+        if (!response.ok) {
+            throw new Error(`Error ${response.status}: ${response.statusText}`);
+        }
+        
         const data = await response.json();
+        
+        if (!data.success) {
+            console.error('Error en respuesta:', data.message);
+            document.getElementById('tablaClientes').innerHTML = 
+                `<p class="error">Error: ${data.message || 'No se pudieron cargar los clientes'}</p>`;
+            return;
+        }
+        
         clientes = data.data || [];
         mostrarClientes(clientes);
     } catch (error) {
         console.error('Error al cargar clientes:', error);
+        document.getElementById('tablaClientes').innerHTML = 
+            `<p class="error">Error al cargar: ${error.message}</p>`;
     }
 }
 
@@ -254,7 +269,7 @@ function mostrarClientes(clientesArray) {
     container.innerHTML = html;
 }
 
-// ========== MASCOTAS ==========
+// MASCOTAS
 async function loadMascotas() {
     try {
         const response = await fetch(`${API_URL}/mascotas`);
@@ -316,7 +331,7 @@ function mostrarMascotas(mascotasArray) {
     container.innerHTML = html;
 }
 
-// ========== CITAS ==========
+// CITAS
 async function loadCitas() {
     try {
         const response = await fetch(`${API_URL}/citas`);
@@ -380,19 +395,19 @@ function mostrarCitas(citasArray) {
     container.innerHTML = html;
 }
 
-// ========== PRODUCTOS ==========
+// PRODUCTOS
 async function loadProductos() {
     try {
-        console.log('🔄 Cargando productos...');
+        console.log('Cargando productos...');
         const response = await fetch(`${API_URL}/productos`);
-        console.log('📦 Response status:', response.status);
+        console.log('Response status:', response.status);
         const data = await response.json();
-        console.log('📦 Data recibida:', data);
+        console.log('Data recibida:', data);
         productos = data.data || [];
-        console.log('📦 Total productos:', productos.length);
+        console.log('Total productos:', productos.length);
         mostrarProductos(productos);
     } catch (error) {
-        console.error('❌ Error al cargar productos:', error);
+        console.error('Error al cargar productos:', error);
         const container = document.getElementById('tablaProductos');
         if (container) {
             container.innerHTML = '<p class="loading">Error al cargar productos</p>';
@@ -449,7 +464,7 @@ function mostrarProductos(productosArray) {
     container.innerHTML = html;
 }
 
-// ========== TRABAJADORES ==========
+// TRABAJADORES
 async function loadTrabajadores() {
     try {
         const response = await fetch(`${API_URL}/trabajadores`);
@@ -508,7 +523,7 @@ function mostrarTrabajadores(trabajadoresArray) {
     container.innerHTML = html;
 }
 
-// ========== TRATAMIENTOS ==========
+// TRATAMIENTOS
 async function loadTratamientos() {
     try {
         const response = await fetch(`${API_URL}/tratamientos`);
@@ -569,7 +584,7 @@ function mostrarTratamientos(tratamientosArray) {
     container.innerHTML = html;
 }
 
-// ========== FUNCIONES DE FORMATO ==========
+// FUNCIONES DE FORMATO
 function formatDateTime(dateStr) {
     const date = new Date(dateStr);
     return date.toLocaleString('es-PE', {
@@ -656,7 +671,7 @@ function getBadgeClass(estado) {
     return classes[estado] || 'secondary';
 }
 
-// ========== FILTROS Y BÚSQUEDA ==========
+// FILTROS Y BÚSQUEDAS
 function setupFilters() {
     // Búsqueda de clientes
     const buscarCliente = document.getElementById('buscarCliente');
@@ -743,7 +758,7 @@ function aplicarFiltrosCitas() {
     mostrarCitas(filtered);
 }
 
-// ========== MODALES ==========
+// MODALES
 let clienteEditando = null;
 
 function mostrarModalCliente(clienteId = null) {
@@ -868,9 +883,13 @@ async function guardarCliente(event) {
         if (data.success) {
             cerrarModal();
             loadClientes();
+        } else {
+            alert('Error: ' + (data.message || 'No se pudo guardar el cliente'));
+            console.error('Error del servidor:', data);
         }
     } catch (error) {
         console.error('Error:', error);
+        alert('Error al guardar: ' + error.message);
     }
 }
 
@@ -941,7 +960,7 @@ function verCliente(id) {
     document.getElementById('modalContainer').innerHTML = modalHTML;
 }
 
-// ========== MASCOTAS ==========
+// MASCOTAS
 let mascotaEditando = null;
 
 async function mostrarModalMascota(mascotaId = null) {
@@ -1139,7 +1158,7 @@ function verMascota(id) {
                         <strong>Nombre:</strong> ${mascota.nombre}
                     </div>
                     <div class="detail-row">
-                        <strong>Propietario:</strong> ${mascota.cliente_nombre || 'No especificado'}
+                        <strong>Propietario:</strong> ${mascota.nombres ? `${mascota.nombres} ${mascota.apellido_paterno}` : 'No especificado'}
                     </div>
                     <div class="detail-row">
                         <strong>Especie:</strong> ${mascota.especie}
@@ -1160,9 +1179,6 @@ function verMascota(id) {
                         <strong>Peso:</strong> ${mascota.peso ? mascota.peso + ' kg' : 'No registrado'}
                     </div>
                     <div class="detail-row">
-                        <strong>Microchip:</strong> ${mascota.microchip || 'No tiene'}
-                    </div>
-                    <div class="detail-row">
                         <strong>Observaciones:</strong> ${mascota.observaciones || 'Ninguna'}
                     </div>
                 </div>
@@ -1179,7 +1195,7 @@ function verMascota(id) {
     document.getElementById('modalContainer').innerHTML = modalHTML;
 }
 
-// ========== CITAS ==========
+// CITAS
 let citaEditando = null;
 
 async function mostrarModalCita(citaId = null) {
@@ -1331,15 +1347,32 @@ async function guardarCita(event) {
 
     console.log('Guardando cita con mascota_id:', mascotaId, 'citaEditando:', citaEditando);
 
+    // Validar campos requeridos
+    if (!mascotaId || isNaN(mascotaId)) {
+        alert('Error: Debes seleccionar una mascota');
+        return;
+    }
+
+    const veterinarioId = document.getElementById('veterinario_id').value;
+    if (!veterinarioId) {
+        alert('Error: Debes seleccionar un veterinario');
+        return;
+    }
+
     const citaData = {
         mascota_id: mascotaId,
-        veterinario_id: parseInt(document.getElementById('veterinario_id').value),
+        veterinario_id: parseInt(veterinarioId),
         fecha_cita: fechaHora,
         tipo: document.getElementById('tipo').value,
-        estado: document.getElementById('estado').value,
         motivo: document.getElementById('motivo').value,
         observaciones: document.getElementById('observaciones').value || null
     };
+
+    // Solo incluir estado si existe en el formulario (no es obligatorio)
+    const estadoElement = document.getElementById('estado');
+    if (estadoElement) {
+        citaData.estado = estadoElement.value;
+    }
 
     console.log('Datos de cita a enviar:', citaData);
 
@@ -1359,11 +1392,16 @@ async function guardarCita(event) {
         console.log('Respuesta al guardar cita:', data);
 
         if (data.success) {
+            alert('Cita guardada correctamente');
             cerrarModal();
             loadCitas();
+        } else {
+            alert('Error al guardar cita: ' + (data.message || 'Error desconocido'));
+            console.error('Respuesta del servidor:', data);
         }
     } catch (error) {
         console.error('Error:', error);
+        alert('Error al guardar cita: ' + error.message);
     }
 }
 

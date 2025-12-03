@@ -119,22 +119,27 @@ app.get('/api/citas/fecha/hoy', async (req, res) => {
 // POST - Crear nueva cita
 app.post('/api/citas', async (req, res) => {
     try {
-        const { mascota_id, veterinario_id, fecha_cita, motivo, tipo, observaciones, costo } = req.body;
+        const { mascota_id, veterinario_id, fecha_cita, motivo, tipo, observaciones, costo, estado } = req.body;
+
+        console.log('Datos recibidos:', req.body);
 
         // Validar campos requeridos
         if (!mascota_id || !veterinario_id || !fecha_cita || !motivo || !tipo) {
+            console.log('Faltan campos requeridos');
             return res.status(400).json({ success: false, message: 'Faltan campos requeridos' });
         }
 
         // Verificar que la mascota existe
         const [mascota] = await pool.query('SELECT id FROM mascotas WHERE id = ? AND estado = "activo"', [mascota_id]);
         if (mascota.length === 0) {
+            console.log('Mascota no encontrada:', mascota_id);
             return res.status(404).json({ success: false, message: 'Mascota no encontrada' });
         }
 
         // Verificar que el veterinario existe
         const [veterinario] = await pool.query('SELECT id FROM trabajadores WHERE id = ? AND cargo = "veterinario" AND estado = "activo"', [veterinario_id]);
         if (veterinario.length === 0) {
+            console.log('Veterinario no encontrado:', veterinario_id);
             return res.status(404).json({ success: false, message: 'Veterinario no encontrado' });
         }
 
@@ -144,15 +149,18 @@ app.post('/api/citas', async (req, res) => {
             [veterinario_id, fecha_cita]
         );
         if (conflicto.length > 0) {
+            console.log('El veterinario ya tiene una cita en ese horario');
             return res.status(400).json({ success: false, message: 'El veterinario ya tiene una cita programada en ese horario' });
         }
 
-        const estado = req.body.estado || 'reserva';
+        const estadoCita = estado || 'reserva';
 
         const [result] = await pool.query(
             'INSERT INTO citas (mascota_id, veterinario_id, fecha_cita, motivo, tipo, estado, observaciones, costo) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-            [mascota_id, veterinario_id, fecha_cita, motivo, tipo, estado, observaciones, costo]
+            [mascota_id, veterinario_id, fecha_cita, motivo, tipo, estadoCita, observaciones, costo]
         );
+
+        console.log('✅ Cita creada:', result.insertId);
 
         res.status(201).json({
             success: true,
@@ -160,6 +168,8 @@ app.post('/api/citas', async (req, res) => {
             data: { id: result.insertId }
         });
     } catch (error) {
+        console.error('Error al crear cita:', error.message);
+        console.error('Stack:', error.stack);
         res.status(500).json({ success: false, message: error.message });
     }
 });
@@ -223,5 +233,5 @@ app.delete('/api/citas/:id', async (req, res) => {
 
 // Iniciar servidor
 app.listen(PORT, () => {
-    console.log(`🟢 Servicio de Citas corriendo en http://localhost:${PORT}`);
+    console.log(`Servicio de Citas corriendo en http://localhost:${PORT}`);
 });
