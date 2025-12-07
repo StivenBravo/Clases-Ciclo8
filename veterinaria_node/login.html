@@ -15,7 +15,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #0dc3ff 0%, #023b48 100%);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -46,7 +46,7 @@
         }
 
         .login-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #0dc3ff 0%, #023b48 100%);
             padding: 40px 30px;
             text-align: center;
             color: white;
@@ -92,7 +92,7 @@
             left: 15px;
             top: 50%;
             transform: translateY(-50%);
-            color: #667eea;
+            color: #0dc3ff;
             font-size: 16px;
         }
 
@@ -107,14 +107,14 @@
 
         .form-group input:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: #0dc3ff;
+            box-shadow: 0 0 0 3px rgba(13, 195, 255, 0.1);
         }
 
         .btn-login {
             width: 100%;
             padding: 14px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #0dc3ff 0%, #023b48 100%);
             color: white;
             border: none;
             border-radius: 10px;
@@ -126,7 +126,7 @@
 
         .btn-login:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 5px 20px rgba(13, 195, 255, 0.4);
         }
 
         .btn-login:active {
@@ -136,6 +136,40 @@
         .btn-login:disabled {
             opacity: 0.6;
             cursor: not-allowed;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn-back 
+        {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #0dc3ff 0%, #023b48 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            flex: 1;
+        }
+        
+
+        .btn-login {
+            flex: 1;
+        }
+
+
+        .btn-back:hover {
+            background: #023b48;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(2, 59, 72, 0.3);
         }
 
         .error-message {
@@ -188,7 +222,7 @@
         }
 
         .remember-forgot a {
-            color: #667eea;
+            color: #0dc3ff;
             text-decoration: none;
         }
 
@@ -236,9 +270,14 @@
                         Recordarme
                     </label>
                 </div>
-                <button type="submit" class="btn-login" id="btnLogin">
-                    <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
-                </button>
+                <div class="btn-group">
+                    <button type="submit" class="btn-login" id="btnLogin">
+                        <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+                    </button>
+                    <a href="/" class="btn-back">
+                        <i class="fas fa-arrow-left"></i> Regresar
+                    </a>
+                </div>
             </form>
         </div>
         <div class="login-footer">
@@ -253,7 +292,13 @@
         window.addEventListener('DOMContentLoaded', () => {
             const user = sessionStorage.getItem('user') || localStorage.getItem('user');
             if (user) {
-                window.location.href = '/';
+                const userData = JSON.parse(user);
+                // Redirigir según el rol
+                if (userData.rol === 'admin') {
+                    window.location.href = '/panel';
+                } else {
+                    window.location.href = '/';
+                }
             }
         });
 
@@ -290,8 +335,14 @@
                         localStorage.setItem('user', JSON.stringify(data.data));
                     }
 
-                    // Redireccionar al dashboard
-                    window.location.href = '/';
+                    // Redireccionar según el rol del usuario
+                    if (data.data.rol === 'admin') {
+                        // Admin va al panel de administración
+                        window.location.href = '/panel';
+                    } else {
+                        // Usuario normal va al home
+                        window.location.href = '/';
+                    }
                 } else {
                     showError(data.message || 'Credenciales inválidas');
                 }
@@ -309,14 +360,6 @@
             errorMessage.textContent = message;
             errorMessage.classList.add('show');
         }
-
-        // Verificar si ya hay sesión activa
-        window.addEventListener('DOMContentLoaded', () => {
-            const user = sessionStorage.getItem('user') || localStorage.getItem('user');
-            if (user) {
-                window.location.href = 'index.html';
-            }
-        });
     </script>
 </body>
 

@@ -19,32 +19,40 @@ app.get('/api/health', (req, res) => {
 async function consultarReniec(dni) {
     try {
         console.log('Consultando RENIEC para DNI:', dni);
-        
-        // Se usa la api.decolecta.com 
-        if (process.env.RENIEC_API_TOKEN && process.env.RENIEC_API_TOKEN.trim() !== '') {
+
+        if (process.env.RENIEC_API_TOKEN && process.env.RENIEC_API_URL) {
             try {
-                const response = await axios.get(`https://api.decolecta.com/v1/reniec/dni?numero=${dni}`, {
+                const url = `${process.env.RENIEC_API_URL}?numero=${dni}`;
+                console.log('URL RENIEC:', url);
+
+                const response = await axios.get(url, {
                     headers: {
-                        'Authorization': `Bearer ${process.env.RENIEC_API_TOKEN}`
+                        'Authorization': `Bearer ${process.env.RENIEC_API_TOKEN}`,
+                        'Accept': 'application/json'
                     },
                     timeout: 10000
                 });
-                
+
                 if (response.data) {
                     console.log('Respuesta RENIEC exitosa:', response.data);
+
+                    // Manejar diferentes formatos de respuesta
+                    const data = response.data.data || response.data;
+
                     return {
-                        nombres: response.data.first_name,
-                        apellidoPaterno: response.data.first_last_name,
-                        apellidoMaterno: response.data.second_last_name
+                        nombres: data.nombres || data.first_name || data.nombre,
+                        apellidoPaterno: data.apellidoPaterno || data.apellido_paterno || data.first_last_name || data.paterno,
+                        apellidoMaterno: data.apellidoMaterno || data.apellido_materno || data.second_last_name || data.materno
                     };
                 }
             } catch (err) {
-                console.error('Error con decolecta:', err.response?.data || err.message);
+                console.error('Error con API RENIEC:', err.response?.data || err.message);
+                console.error('Status:', err.response?.status);
             }
         } else {
-            console.log('Token de RENIEC no configurado');
+            console.log('Token o URL de RENIEC no configurado');
         }
-        
+
         return null;
     } catch (error) {
         console.error('Error consultando RENIEC:', error.message);

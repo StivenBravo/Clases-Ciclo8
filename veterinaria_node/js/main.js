@@ -27,6 +27,14 @@ function verificarSesion() {
 
     try {
         currentUser = JSON.parse(userData);
+
+        // Verificar que el usuario sea admin
+        if (currentUser.rol !== 'admin') {
+            alert('Acceso denegado. Solo administradores pueden acceder al panel.');
+            window.location.href = '/';
+            return;
+        }
+
         document.getElementById('userName').textContent = currentUser.nombre_completo;
     } catch (error) {
         window.location.href = '/login';
@@ -198,25 +206,25 @@ function mostrarCitasDelDia(citas) {
 async function loadClientes() {
     try {
         const response = await fetch(`${API_URL}/clientes`);
-        
+
         if (!response.ok) {
             throw new Error(`Error ${response.status}: ${response.statusText}`);
         }
-        
+
         const data = await response.json();
-        
+
         if (!data.success) {
             console.error('Error en respuesta:', data.message);
-            document.getElementById('tablaClientes').innerHTML = 
+            document.getElementById('tablaClientes').innerHTML =
                 `<p class="error">Error: ${data.message || 'No se pudieron cargar los clientes'}</p>`;
             return;
         }
-        
+
         clientes = data.data || [];
         mostrarClientes(clientes);
     } catch (error) {
         console.error('Error al cargar clientes:', error);
-        document.getElementById('tablaClientes').innerHTML = 
+        document.getElementById('tablaClientes').innerHTML =
             `<p class="error">Error al cargar: ${error.message}</p>`;
     }
 }

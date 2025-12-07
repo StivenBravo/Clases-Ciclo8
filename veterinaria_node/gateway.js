@@ -12,9 +12,16 @@ app.use(cors());
 app.use(express.json());
 
 // Servir archivos estáticos
-app.use(express.static(path.join(__dirname, 'public')));
-app.use('/css', express.static(path.join(__dirname, 'css')));
-app.use('/js', express.static(path.join(__dirname, 'js')));
+// Para el panel de administración (archivos de la raíz)
+app.use('/panel-css', express.static(path.join(__dirname, 'css')));
+app.use('/panel-js', express.static(path.join(__dirname, 'js')));
+
+// Para el home (archivos de home-html)
+app.use(express.static(path.join(__dirname, 'home-html')));
+app.use('/css', express.static(path.join(__dirname, 'home-html/css')));
+app.use('/js', express.static(path.join(__dirname, 'home-html/js')));
+app.use('/images', express.static(path.join(__dirname, 'home-html/images')));
+app.use('/img', express.static(path.join(__dirname, 'img')));
 
 // URLs de los microservicios
 const SERVICES = {
@@ -39,7 +46,12 @@ const handleServiceError = (error, serviceName) => {
 // Rutas principales
 // Página principal
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.join(__dirname, 'home-html', 'index.html'));
+});
+
+// Panel de administración
+app.get('/panel', (req, res) => {
+    res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
 // Login page

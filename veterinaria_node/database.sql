@@ -150,6 +150,15 @@ CREATE TABLE detalle_ventas (
 );
 
 -- Datos de ejemplo
+
+-- Usuarios de ejemplo (contraseña: admin123 y user123)
+-- Las contraseñas deben ser hasheadas con bcrypt en el backend
+-- Estos INSERT son solo para referencia, ejecutar el script de creación de usuarios
+INSERT INTO usuarios (username, password, nombre_completo, rol, estado) VALUES
+('admin', '$2b$10$8ZqhX9Z0YH6b3mX8gKZZDeGZ6K9Z0YH6b3mX8gKZZDeGZ6K9Z0YH6', 'Administrador Sistema', 'admin', 'activo'),
+('recepcion', '$2b$10$8ZqhX9Z0YH6b3mX8gKZZDeGZ6K9Z0YH6b3mX8gKZZDeGZ6K9Z0YH6', 'Recepcionista Principal', 'recepcionista', 'activo'),
+('drvet', '$2b$10$8ZqhX9Z0YH6b3mX8gKZZDeGZ6K9Z0YH6b3mX8gKZZDeGZ6K9Z0YH6', 'Dr. Veterinario', 'veterinario', 'activo');
+
 INSERT INTO trabajadores (dni, nombres, apellidos, cargo, especialidad, telefono, email, fecha_contratacion, salario) VALUES
 ('12345678', 'Carlos', 'Mendoza Ruiz', 'veterinario', 'Medicina General', '987654321', 'cmendoza@vet.com', '2023-01-15', 3500.00),
 ('87654321', 'Ana', 'García López', 'veterinario', 'Cirugía', '987654322', 'agarcia@vet.com', '2023-02-01', 4000.00),
