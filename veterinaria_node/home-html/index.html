@@ -12,6 +12,8 @@
 
   <!-- bootstrap core css -->
   <link rel="stylesheet" type="text/css" href="css/bootstrap.css" />
+  <!-- font awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <!-- fonts style -->
   <link href="https://fonts.googleapis.com/css?family=Dosis:400,500|Poppins:400,700&display=swap" rel="stylesheet">
   <!-- Custom styles for this template -->
@@ -58,8 +60,8 @@
                 <li class="nav-item">
                   <a class="nav-link" href="buy.html"> Comprar ahora </a>
                 </li>
-                <li class="nav-item">
-                  <a class="nav-link" href="/login">Inicia Sesión</a>
+                <li class="nav-item" id="authMenuItem">
+                  <a class="nav-link" href="/login" id="authLink">Inicia Sesión</a>
                 </li>
               </ul>
               <form class="form-inline my-2 my-lg-0 ml-0 ml-lg-4 mb-3 mb-lg-0">
@@ -96,7 +98,7 @@
                       <a href="" class="btn-1">
                         Comprar ahora
                       </a>
-                      <a href="" class="btn-2">
+                      <a href="#reserva-cita" class="btn-2">
                         Disponibilidad de atención
                       </a>
                     </div>
@@ -110,226 +112,111 @@
     <!-- end slider section -->
   </div>
 
-  <!-- about section -->
-
-  <section class="about_section layout_padding">
+  <!-- appointment section -->
+  <section id="reserva-cita" class="appointment_section layout_padding">
     <div class="container">
-      <div class="row">
-        <div class="col-md-6">
-          <div class="img-box">
-            <img src="images/about.png" alt="">
-          </div>
-        </div>
-        <div class="col-md-6">
-          <div class="detail-box">
-            <h2 class="custom_heading">
+      <div class="heading_container text-center">
+        <h2>
+          Disponibilidad de <span>Atenciones</span>
+        </h2>
+        <p>Reserva tu cita con nuestros veterinarios profesionales</p>
+      </div>
 
-              <span>
-                Clinic
-              </span>
-            </h2>
-            <p>
-              Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the
-              industry's standard dummy text ever since theLorem Ipsum is simply dummy text of the printing and
-              typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the
-            </p>
-            <div>
-              <a href="">
-                About More
-              </a>
+      <!-- Alert para usuario no logueado -->
+      <div id="alertLogin" class="alert alert-warning text-center" style="display: none;">
+        <i class="fa fa-exclamation-triangle"></i>
+        Debes <a href="/login" class="alert-link">iniciar sesión</a> para poder reservar una cita.
+      </div>
+
+      <div class="appointment_container" id="appointmentContainer">
+        <div class="row">
+          <!-- Calendario semanal -->
+          <div class="col-lg-7 col-md-12">
+            <div class="calendar_box">
+              <h4 class="calendar_title">Calendario de la Semana</h4>
+              <div class="week_selector">
+                <button class="btn btn-sm btn-outline-primary" id="prevWeek">
+                  <i class="fa fa-chevron-left"></i> Anterior
+                </button>
+                <span id="weekRange" class="mx-3"></span>
+                <button class="btn btn-sm btn-outline-primary" id="nextWeek">
+                  Siguiente <i class="fa fa-chevron-right"></i>
+                </button>
+              </div>
+              <div id="weekCalendar" class="week_calendar"></div>
+            </div>
+          </div>
+
+          <!-- Formulario de reserva -->
+          <div class="col-lg-5 col-md-12">
+            <div class="appointment_form">
+              <h4 class="form_title">Datos de la Cita</h4>
+              <form id="formReserva">
+                <div class="form-group">
+                  <label>Veterinario *</label>
+                  <select class="form-control" id="veterinario" name="veterinario" required>
+                    <option value="">Seleccione un veterinario</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label>Fecha y Hora *</label>
+                  <input type="datetime-local" class="form-control" id="fechaCita" name="fechaCita" required readonly>
+                  <small class="form-text text-muted">Seleccione un horario del calendario</small>
+                </div>
+
+                <div class="form-group">
+                  <label>Tu Nombre</label>
+                  <input type="text" class="form-control" id="nombreCliente" name="nombreCliente" readonly>
+                </div>
+
+                <div class="form-group">
+                  <label>Nombre de tu Mascota *</label>
+                  <input type="text" class="form-control" id="nombreMascota" name="nombreMascota" required
+                    placeholder="Ej: Firulais">
+                </div>
+
+                <div class="form-group">
+                  <label>Especie *</label>
+                  <select class="form-control" id="especie" name="especie" required>
+                    <option value="">Seleccione la especie</option>
+                    <option value="perro">Perro</option>
+                    <option value="gato">Gato</option>
+                    <option value="ave">Ave</option>
+                    <option value="roedor">Roedor</option>
+                    <option value="reptil">Reptil</option>
+                    <option value="otro">Otro</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label>Tipo de Consulta *</label>
+                  <select class="form-control" id="tipoCita" name="tipoCita" required>
+                    <option value="">Seleccione el tipo</option>
+                    <option value="consulta">Consulta General</option>
+                    <option value="vacunacion">Vacunación</option>
+                    <option value="control">Control</option>
+                    <option value="emergencia">Emergencia</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label>Motivo de la Consulta *</label>
+                  <textarea class="form-control" id="motivo" name="motivo" rows="3" required
+                    placeholder="Describa brevemente el motivo de la consulta"></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block" id="btnReservar">
+                  <i class="fa fa-calendar-check"></i> Reservar Cita
+                </button>
+              </form>
             </div>
           </div>
         </div>
       </div>
     </div>
   </section>
-
-  <!-- service section -->
-  <section class="service_section layout_padding">
-    <div class="container-fluid">
-      <div class="row">
-        <div class="col-md-6 offset-md-2">
-          <h2 class="custom_heading">
-            Our <span>Services</span>
-          </h2>
-          <div class="container layout_padding2">
-            <div class="row">
-              <div class="col-md-4">
-                <div class="img_box">
-                  <img src="images/s-1.png" alt="">
-                </div>
-                <div class="detail_box">
-                  <h6>
-                    Pet Care
-                  </h6>
-                  <p>
-                    onsectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
-                    enim ad minim veniam, quis nostrud exe
-                  </p>
-                </div>
-              </div>
-              <div class="col-md-4">
-                <div class="img_box">
-                  <img src="images/s-2.png" alt="">
-                </div>
-                <div class="detail_box">
-                  <h6>
-                    Pet Hotel
-                  </h6>
-                  <p>
-                    onsectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
-                    enim ad minim veniam, quis nostrud exe
-                  </p>
-                </div>
-              </div>
-              <div class="col-md-4">
-                <div class="img_box">
-                  <img src="images/s-3.png" alt="">
-                </div>
-                <div class="detail_box">
-                  <h6>
-                    Emergency
-                  </h6>
-                  <p>
-                    onsectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
-                    enim ad minim veniam, quis nostrud exe
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div>
-            <a href="">
-              Read More
-            </a>
-          </div>
-        </div>
-        <div class="col-md-4">
-          <img src="images/tool.png" alt="" class="w-100">
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- end service section -->
-
-  <!-- buy section -->
-
-  <section class="buy_section layout_padding">
-    <div class="container">
-      <h2>
-        You Can Buy Pet From Our Clinic
-      </h2>
-      <p>
-        consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
-        veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip
-      </p>
-      <div class="d-flex justify-content-center">
-        <a href="">
-          Buy Now
-        </a>
-      </div>
-    </div>
-  </section>
-
-
-  <!-- client section -->
-  <section class="client_section layout_padding-bottom">
-    <div class="container">
-      <h2 class="custom_heading text-center">
-        What Say Our
-        <span>
-          clients
-        </span>
-      </h2>
-      <p class="text-center">
-        orem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut la
-      </p>
-      <div id="carouselExample2Indicators" class="carousel slide" data-ride="carousel">
-        <ol class="carousel-indicators">
-          <li data-target="#carouselExample2Indicators" data-slide-to="0" class="active"></li>
-          <li data-target="#carouselExample2Indicators" data-slide-to="1"></li>
-          <li data-target="#carouselExample2Indicators" data-slide-to="2"></li>
-        </ol>
-        <div class="carousel-inner">
-          <div class="carousel-item active">
-            <div class="layout_padding2 pl-100">
-              <div class="client_container ">
-                <div class="img_box">
-                  <img src="images/client.jpg" alt="">
-                </div>
-                <div class="detail_box">
-                  <h5>
-                    Sandy Mark
-                  </h5>
-                  <p>
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore
-                    et
-                    dolore
-                    magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex
-                    ea
-                    commodo
-                    consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="carousel-item">
-            <div class="layout_padding2 pl-100">
-              <div class="client_container ">
-                <div class="img_box">
-                  <img src="images/client.jpg" alt="">
-                </div>
-                <div class="detail_box">
-                  <h5>
-                    Sandy Mark
-                  </h5>
-                  <p>
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore
-                    et
-                    dolore
-                    magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex
-                    ea
-                    commodo
-                    consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="carousel-item">
-            <div class="layout_padding2 pl-100">
-              <div class="client_container ">
-                <div class="img_box">
-                  <img src="img" alt="">
-                </div>
-                <div class="detail_box">
-                  <h5>
-                    Sandy Mark
-                  </h5>
-                  <p>
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore
-                    et
-                    dolore
-                    magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex
-                    ea
-                    commodo
-                    consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-
-    </div>
-
-  </section>
-  <!-- end client section -->
+  <!-- end appointment section -->
 
   <!-- contact and map section -->
   <section class="contact_map_section">
@@ -379,8 +266,8 @@
           </div>
         </div>
       </div>
+    </div>
   </section>
-
   <!-- end contact and map section -->
 
   <!-- footer section -->
@@ -394,6 +281,8 @@
 
   <script type="text/javascript" src="js/jquery-3.4.1.min.js"></script>
   <script type="text/javascript" src="js/bootstrap.js"></script>
+  <script type="text/javascript" src="js/auth-navbar.js"></script>
+  <script type="text/javascript" src="js/appointments.js"></script>
 </body>
 
 </html>

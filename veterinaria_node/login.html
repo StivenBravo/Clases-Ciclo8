@@ -4,8 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Sistema Veterinaria</title>
+    <title>Iniciar sesion Veterinaria</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="home-html/css/style.css">
     <style>
         * {
             margin: 0;
@@ -16,10 +18,15 @@
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #0dc3ff 0%, #023b48 100%);
+            min-height: 100vh;
+            padding-top: 100px;
+        }
+
+        .login-wrapper {
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
+            min-height: calc(100vh - 100px);
             padding: 20px;
         }
 
@@ -47,14 +54,14 @@
 
         .login-header {
             background: linear-gradient(135deg, #0dc3ff 0%, #023b48 100%);
-            padding: 40px 30px;
+            padding: 30px 30px 20px;
             text-align: center;
             color: white;
         }
 
         .login-header i {
-            font-size: 60px;
-            margin-bottom: 15px;
+            font-size: 50px;
+            margin-bottom: 10px;
         }
 
         .login-header h1 {
@@ -65,10 +72,47 @@
         .login-header p {
             font-size: 14px;
             opacity: 0.9;
+            margin-bottom: 20px;
+        }
+
+        .tab-container {
+            display: flex;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 12px;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tab-button.active {
+            background: white;
+            color: #023b48;
+        }
+
+        .tab-button:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.1);
         }
 
         .login-body {
             padding: 40px 30px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
         }
 
         .form-group {
@@ -111,42 +155,15 @@
             box-shadow: 0 0 0 3px rgba(13, 195, 255, 0.1);
         }
 
-        .btn-login {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #0dc3ff 0%, #023b48 100%);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .btn-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(13, 195, 255, 0.4);
-        }
-
-        .btn-login:active {
-            transform: translateY(0);
-        }
-
-        .btn-login:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
         .btn-group {
             display: flex;
             gap: 10px;
             margin-top: 20px;
         }
 
-        .btn-back 
-        {
-            width: 100%;
+        .btn-login,
+        .btn-back {
+            flex: 1;
             padding: 14px;
             background: linear-gradient(135deg, #0dc3ff 0%, #023b48 100%);
             color: white;
@@ -156,20 +173,28 @@
             font-weight: 600;
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
-            flex: 1;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
-        
 
-        .btn-login {
-            flex: 1;
-        }
-
-
+        .btn-login:hover,
         .btn-back:hover {
-            background: #023b48;
-            color: white;
             transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(2, 59, 72, 0.3);
+            box-shadow: 0 5px 20px rgba(13, 195, 255, 0.4);
+            color: white;
+        }
+
+        .btn-login:active,
+        .btn-back:active {
+            transform: translateY(0);
+        }
+
+        .btn-login:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
 
         .error-message {
@@ -237,84 +262,236 @@
             font-size: 13px;
             color: #666;
         }
+
+        /* Navbar adjustments for login page */
+        .header_section {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
     </style>
 </head>
 
 <body>
-    <div class="login-container">
-        <div class="login-header">
-            <i class="fas fa-paw"></i>
-            <h1>Sistema Veterinaria</h1>
-            <p>Inicia sesión para continuar</p>
-        </div>
-        <div class="login-body">
-            <div id="errorMessage" class="error-message"></div>
-            <form id="loginForm">
-                <div class="form-group">
-                    <label>Usuario</label>
-                    <div class="input-group">
-                        <i class="fas fa-user"></i>
-                        <input type="text" id="username" placeholder="Ingresa tu usuario" required autofocus>
-                    </div>
+    <!-- Login Container -->
+    <div class="login-wrapper">
+        <div class="login-container">
+            <div class="login-header">
+                <i class="fas fa-paw"></i>
+                <h1>Iniciar sesión</h1>
+                <p>Bienvenido</p>
+                <div class="tab-container">
+                    <button class="tab-button active" onclick="switchTab('login')">Iniciar Sesión</button>
+                    <button class="tab-button" onclick="switchTab('register')">Registrarse</button>
                 </div>
-                <div class="form-group">
-                    <label>Contraseña</label>
-                    <div class="input-group">
-                        <i class="fas fa-lock"></i>
-                        <input type="password" id="password" placeholder="Ingresa tu contraseña" required>
-                    </div>
+            </div>
+            <div class="login-body">
+                <div id="errorMessage" class="error-message"></div>
+                <div id="successMessage" class="error-message"
+                    style="background: #d4edda; border-color: #c3e6cb; color: #155724;"></div>
+
+                <!-- Tab Login -->
+                <div id="loginTab" class="tab-content active">
+                    <form id="loginForm">
+                        <div class="form-group">
+                            <label>Usuario</label>
+                            <div class="input-group">
+                                <i class="fas fa-user"></i>
+                                <input type="text" id="username" placeholder="Ingresa tu usuario" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Contraseña</label>
+                            <div class="input-group">
+                                <i class="fas fa-lock"></i>
+                                <input type="password" id="password" placeholder="Ingresa tu contraseña" required>
+                            </div>
+                        </div>
+                        <div class="btn-group">
+                            <a href="/" class="btn-back">
+                                <i class="fas fa-home"></i> Ir al Inicio
+                            </a>
+                            <button type="submit" class="btn-login" id="btnLogin">
+                                <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+                            </button>
+                        </div>
+                    </form>
                 </div>
-                <div class="remember-forgot">
-                    <label>
-                        <input type="checkbox" id="remember">
-                        Recordarme
-                    </label>
+
+                <!-- Tab Registro -->
+                <div id="registerTab" class="tab-content">
+                    <form id="registerForm">
+                        <div class="form-group">
+                            <label>DNI</label>
+                            <div class="input-group">
+                                <i class="fas fa-id-card"></i>
+                                <input type="text" id="dni" placeholder="Ingresa tu DNI" maxlength="8"
+                                    pattern="[0-9]{8}" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Nombres</label>
+                            <div class="input-group">
+                                <i class="fas fa-user"></i>
+                                <input type="text" id="nombres" placeholder="Se autocompletará" readonly>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Apellido Paterno</label>
+                            <div class="input-group">
+                                <i class="fas fa-user"></i>
+                                <input type="text" id="apellidoPaterno" placeholder="Se autocompletará" readonly>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Apellido Materno</label>
+                            <div class="input-group">
+                                <i class="fas fa-user"></i>
+                                <input type="text" id="apellidoMaterno" placeholder="Se autocompletará" readonly>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Teléfono</label>
+                            <div class="input-group">
+                                <i class="fas fa-phone"></i>
+                                <input type="tel" id="telefono" placeholder="Ingresa tu teléfono" pattern="[0-9]{9}"
+                                    maxlength="9" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Correo Electrónico</label>
+                            <div class="input-group">
+                                <i class="fas fa-envelope"></i>
+                                <input type="email" id="correo" placeholder="Ingresa tu correo" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Dirección</label>
+                            <div class="input-group">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <input type="text" id="direccion" placeholder="Ingresa tu dirección" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Contraseña</label>
+                            <div class="input-group">
+                                <i class="fas fa-lock"></i>
+                                <input type="password" id="passwordRegister" placeholder="Crea una contraseña"
+                                    minlength="6" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Confirmar Contraseña</label>
+                            <div class="input-group">
+                                <i class="fas fa-lock"></i>
+                                <input type="password" id="confirmPassword" placeholder="Confirma tu contraseña"
+                                    minlength="6" required>
+                            </div>
+                        </div>
+                        <div class="btn-group">
+                            <a href="/" class="btn-back">
+                                <i class="fas fa-home"></i> Ir al Inicio
+                            </a>
+                            <button type="submit" class="btn-login" id="btnRegister">
+                                <i class="fas fa-user-plus"></i> Registrarse
+                            </button>
+                        </div>
+                    </form>
                 </div>
-                <div class="btn-group">
-                    <button type="submit" class="btn-login" id="btnLogin">
-                        <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
-                    </button>
-                    <a href="/" class="btn-back">
-                        <i class="fas fa-arrow-left"></i> Regresar
-                    </a>
-                </div>
-            </form>
-        </div>
-        <div class="login-footer">
-            © 2025 Sistema de Gestión Veterinaria
+            </div>
+            <div class="login-footer">
+                © 2025 Veterinaria Mascotas
+            </div>
         </div>
     </div>
 
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
         const API_URL = 'http://localhost:3000/api';
+
+        // Función para cambiar entre tabs
+        function switchTab(tab) {
+            const loginTab = document.getElementById('loginTab');
+            const registerTab = document.getElementById('registerTab');
+            const tabButtons = document.querySelectorAll('.tab-button');
+
+            if (tab === 'login') {
+                loginTab.classList.add('active');
+                registerTab.classList.remove('active');
+                tabButtons[0].classList.add('active');
+                tabButtons[1].classList.remove('active');
+            } else {
+                loginTab.classList.remove('active');
+                registerTab.classList.add('active');
+                tabButtons[0].classList.remove('active');
+                tabButtons[1].classList.add('active');
+            }
+
+            // Limpiar mensajes
+            document.getElementById('errorMessage').classList.remove('show');
+            document.getElementById('successMessage').classList.remove('show');
+        }
 
         // Verificar si ya hay sesión
         window.addEventListener('DOMContentLoaded', () => {
             const user = sessionStorage.getItem('user') || localStorage.getItem('user');
             if (user) {
                 const userData = JSON.parse(user);
-                // Redirigir según el rol
                 if (userData.rol === 'admin') {
                     window.location.href = '/panel';
                 } else {
                     window.location.href = '/';
                 }
             }
+
+            // Event listener para consultar DNI
+            document.getElementById('dni').addEventListener('blur', async function () {
+                const dni = this.value.trim();
+                if (dni.length === 8) {
+                    await consultarDNI(dni);
+                }
+            });
         });
 
+        // Consultar DNI en RENIEC
+        async function consultarDNI(dni) {
+            try {
+                showError('Consultando DNI...');
+                const response = await fetch(`${API_URL}/clientes/reniec/${dni}`);
+                const data = await response.json();
+
+                if (data.success && data.data) {
+                    document.getElementById('nombres').value = data.data.nombres || '';
+                    document.getElementById('apellidoPaterno').value = data.data.apellidoPaterno || '';
+                    document.getElementById('apellidoMaterno').value = data.data.apellidoMaterno || '';
+                    document.getElementById('errorMessage').classList.remove('show');
+                    showSuccess('Datos obtenidos correctamente');
+                } else {
+                    showError('No se pudo consultar el DNI. Verifica el número.');
+                    document.getElementById('nombres').value = '';
+                    document.getElementById('apellidoPaterno').value = '';
+                    document.getElementById('apellidoMaterno').value = '';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Error al consultar DNI');
+            }
+        }
+
+        // Login Form
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
-            const remember = document.getElementById('remember').checked;
             const btnLogin = document.getElementById('btnLogin');
             const errorMessage = document.getElementById('errorMessage');
 
-            // Ocultar mensaje de error
             errorMessage.classList.remove('show');
-
-            // Deshabilitar botón
             btnLogin.disabled = true;
             btnLogin.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Iniciando sesión...';
 
@@ -328,19 +505,11 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    // Guardar datos de sesión
                     sessionStorage.setItem('user', JSON.stringify(data.data));
 
-                    if (remember) {
-                        localStorage.setItem('user', JSON.stringify(data.data));
-                    }
-
-                    // Redireccionar según el rol del usuario
                     if (data.data.rol === 'admin') {
-                        // Admin va al panel de administración
                         window.location.href = '/panel';
                     } else {
-                        // Usuario normal va al home
                         window.location.href = '/';
                     }
                 } else {
@@ -355,10 +524,89 @@
             }
         });
 
+        // Register Form
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const dni = document.getElementById('dni').value;
+            const nombres = document.getElementById('nombres').value;
+            const apellidoPaterno = document.getElementById('apellidoPaterno').value;
+            const apellidoMaterno = document.getElementById('apellidoMaterno').value;
+            const telefono = document.getElementById('telefono').value;
+            const correo = document.getElementById('correo').value;
+            const direccion = document.getElementById('direccion').value;
+            const password = document.getElementById('passwordRegister').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const btnRegister = document.getElementById('btnRegister');
+
+            if (!nombres || !apellidoPaterno || !apellidoMaterno) {
+                showError('Por favor, consulta el DNI primero.');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                showError('Las contraseñas no coinciden.');
+                return;
+            }
+
+            if (password.length < 6) {
+                showError('La contraseña debe tener al menos 6 caracteres.');
+                return;
+            }
+
+            document.getElementById('errorMessage').classList.remove('show');
+            document.getElementById('successMessage').classList.remove('show');
+            btnRegister.disabled = true;
+            btnRegister.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registrando...';
+
+            try {
+                const response = await fetch(`${API_URL}/clientes/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        dni,
+                        nombres,
+                        apellidoPaterno,
+                        apellidoMaterno,
+                        telefono,
+                        correo,
+                        direccion,
+                        password
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showSuccess('¡Registro exitoso! Ya puedes usar el sistema.');
+                    document.getElementById('registerForm').reset();
+                    setTimeout(() => {
+                        switchTab('login');
+                    }, 2000);
+                } else {
+                    showError(data.message || 'Error al registrarse');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Error de conexión. Verifica que el servidor esté activo.');
+            } finally {
+                btnRegister.disabled = false;
+                btnRegister.innerHTML = '<i class="fas fa-user-plus"></i> Registrarse';
+            }
+        });
+
         function showError(message) {
             const errorMessage = document.getElementById('errorMessage');
             errorMessage.textContent = message;
             errorMessage.classList.add('show');
+            document.getElementById('successMessage').classList.remove('show');
+        }
+
+        function showSuccess(message) {
+            const successMessage = document.getElementById('successMessage');
+            successMessage.textContent = message;
+            successMessage.classList.add('show');
+            document.getElementById('errorMessage').classList.remove('show');
         }
     </script>
 </body>

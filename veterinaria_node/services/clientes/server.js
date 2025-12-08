@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
+const bcrypt = require('bcryptjs');
 const { pool } = require('../../config/database');
 require('dotenv').config();
 
@@ -63,7 +64,7 @@ async function consultarReniec(dni) {
 // GET - Listar todos los clientes
 app.get('/api/clientes', async (req, res) => {
     try {
-        const [rows] = await pool.query('SELECT * FROM clientes WHERE estado = "activo" ORDER BY fecha_registro DESC');
+        const [rows] = await pool.query('SELECT * FROM clientes ORDER BY fecha_registro DESC');
         res.json({
             success: true,
             data: rows,
@@ -96,6 +97,34 @@ app.get('/api/clientes/dni/:dni', async (req, res) => {
         }
         res.json({ success: true, data: rows[0] });
     } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// GET - Consultar RENIEC por DNI
+app.get('/api/clientes/reniec/:dni', async (req, res) => {
+    try {
+        const dni = req.params.dni;
+
+        if (!dni || dni.length !== 8) {
+            return res.status(400).json({ success: false, message: 'DNI debe tener 8 dígitos' });
+        }
+
+        const datosReniec = await consultarReniec(dni);
+
+        if (datosReniec && datosReniec.nombres) {
+            res.json({
+                success: true,
+                data: datosReniec
+            });
+        } else {
+            res.json({
+                success: false,
+                message: 'No se pudo consultar el DNI'
+            });
+        }
+    } catch (error) {
+        console.error('Error en consulta RENIEC:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 });
@@ -134,7 +163,77 @@ app.post('/api/clientes/validar-dni', async (req, res) => {
     }
 });
 
-// POST - Registrar nuevo cliente
+// POST - Registrar nuevo cliente desde formulario público (sin autenticación)
+app.post('/api/clientes/register', async (req, res) => {
+    try {
+        console.log('📝 Solicitud de registro recibida');
+        console.log('Datos:', req.body);
+
+        const { dni, nombres, apellidoPaterno, apellidoMaterno, telefono, correo, direccion, password } = req.body;
+
+        // Validar campos requeridos
+        if (!dni || !nombres || !apellidoPaterno || !apellidoMaterno || !telefono || !correo || !direccion || !password) {
+            console.log('❌ Faltan campos requeridos');
+            return res.status(400).json({ success: false, message: 'Todos los campos son requeridos' });
+        }
+
+        console.log('✓ Campos validados');
+
+        // Validar longitud de contraseña
+        if (password.length < 6) {
+            console.log('❌ Contraseña muy corta');
+            return res.status(400).json({ success: false, message: 'La contraseña debe tener al menos 6 caracteres' });
+        }
+
+        console.log('✓ Contraseña válida');
+
+        // Verificar si el DNI ya existe
+        const [existing] = await pool.query('SELECT id FROM clientes WHERE dni = ?', [dni]);
+        if (existing.length > 0) {
+            console.log('❌ DNI ya registrado');
+            return res.status(400).json({ success: false, message: 'El DNI ya está registrado' });
+        }
+
+        console.log('✓ DNI disponible');
+
+        // Encriptar contraseña
+        const hashedPassword = await bcrypt.hash(password, 10);
+        console.log('✓ Contraseña encriptada');
+
+        // Crear username automáticamente (DNI)
+        const username = dni;
+        const nombreCompleto = `${nombres} ${apellidoPaterno} ${apellidoMaterno}`;
+
+        // Insertar en tabla usuarios
+        console.log('📤 Insertando usuario...');
+        const [userResult] = await pool.query(
+            'INSERT INTO usuarios (username, password, nombre_completo, rol) VALUES (?, ?, ?, ?)',
+            [username, hashedPassword, nombreCompleto, 'cliente']
+        );
+        console.log('✓ Usuario creado con ID:', userResult.insertId);
+
+        // Insertar el nuevo cliente vinculado al usuario CON DIRECCIÓN
+        console.log('📤 Insertando cliente...');
+        const [result] = await pool.query(
+            'INSERT INTO clientes (dni, nombres, apellido_paterno, apellido_materno, telefono, email, direccion, usuario_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            [dni, nombres, apellidoPaterno, apellidoMaterno, telefono, correo, direccion, userResult.insertId]
+        );
+        console.log('✓ Cliente creado con ID:', result.insertId);
+
+        console.log('✅ Registro completado exitosamente');
+
+        res.status(201).json({
+            success: true,
+            message: 'Registro completado exitosamente. Usa tu DNI como usuario para iniciar sesión.',
+            data: { id: result.insertId, dni, username }
+        });
+    } catch (error) {
+        console.error('❌ Error en registro:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// POST - Registrar nuevo cliente (desde panel admin)
 app.post('/api/clientes', async (req, res) => {
     try {
         const { dni, nombres, apellido_paterno, apellido_materno, telefono, email, direccion } = req.body;
@@ -180,6 +279,21 @@ app.put('/api/clientes/:id', async (req, res) => {
         }
 
         res.json({ success: true, message: 'Cliente actualizado exitosamente' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// PUT - Aprobar registro de cliente
+app.put('/api/clientes/:id/aprobar', async (req, res) => {
+    try {
+        const [result] = await pool.query('UPDATE clientes SET estado = "activo" WHERE id = ?', [req.params.id]);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ success: false, message: 'Cliente no encontrado' });
+        }
+
+        res.json({ success: true, message: 'Cliente aprobado exitosamente' });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }

@@ -39,7 +39,7 @@
             </a>
             <a href="#" class="nav-item" data-section="trabajadores">
                 <i class="fas fa-user-md"></i>
-                <span>Trabajadores</span>
+                <span>Doctores</span>
             </a>
             <a href="#" class="nav-item" data-section="tratamientos">
                 <i class="fas fa-notes-medical"></i>
@@ -168,15 +168,44 @@
                         <i class="fas fa-plus"></i> Nueva Cita
                     </button>
                 </div>
+
+                <!-- Calendario de Disponibilidad -->
+                <div class="card" style="margin-bottom: 20px;">
+                    <h3 style="margin-bottom: 20px; color: #023b48;">
+                        <i class="fas fa-calendar-alt"></i> Calendario de Disponibilidad
+                    </h3>
+
+                    <div class="week-selector"
+                        style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 20px;">
+                        <button class="btn btn-sm btn-secondary" onclick="cambiarSemanaAdmin(-1)">
+                            <i class="fas fa-chevron-left"></i> Anterior
+                        </button>
+                        <span id="adminWeekRange"
+                            style="font-weight: 600; min-width: 200px; text-align: center;"></span>
+                        <button class="btn btn-sm btn-secondary" onclick="cambiarSemanaAdmin(1)">
+                            Siguiente <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+
+                    <div id="adminCalendar" class="admin-calendar"></div>
+                </div>
+
+                <!-- Lista de Citas (con filtros) -->
                 <div class="card">
+                    <h3 style="margin-bottom: 15px; color: #023b48;">
+                        <i class="fas fa-list"></i> Lista de Citas
+                    </h3>
                     <div class="filters">
-                        <input type="date" id="filtroCitas" class="filter-input">
+                        <input type="date" id="filtroCitas" class="filter-input" placeholder="Filtrar por fecha">
                         <select id="filtroEstadoCitas" class="filter-input">
                             <option value="">Todos los estados</option>
-                            <option value="reserva">Reserva</option>
-                            <option value="atendida">Atendida</option>
-                            <option value="cancelada">Cancelada</option>
+                            <option value="reserva">Reservas Pendientes</option>
+                            <option value="atendida">Atendidas</option>
+                            <option value="cancelada">Canceladas</option>
                         </select>
+                        <button class="btn btn-sm btn-primary" onclick="aplicarFiltrosCitas()">
+                            <i class="fas fa-filter"></i> Filtrar
+                        </button>
                     </div>
                     <div id="tablaCitas" class="table-container">
                         <p class="loading">Cargando...</p>
@@ -210,23 +239,79 @@
                 </div>
             </section>
 
-            <!-- Trabajadores Section -->
+            <!-- Doctores Section -->
             <section id="trabajadores" class="section">
                 <div class="section-header">
-                    <h2>Gestión de Trabajadores</h2>
-                    <button class="btn btn-primary" onclick="mostrarModalTrabajador()">
-                        <i class="fas fa-plus"></i> Nuevo Trabajador
+                    <h2>Gestión de Doctores</h2>
+                    <button class="btn btn-primary" onclick="mostrarModalDoctor()">
+                        <i class="fas fa-plus"></i> Nuevo Doctor
                     </button>
                 </div>
+
+                <!-- Resumen de turnos -->
+                <div class="card"
+                    style="margin-bottom: 20px; background: linear-gradient(135deg, #0dc3ff15, #023b4815);">
+                    <h3 style="color: #023b48; margin-bottom: 15px;">
+                        <i class="fas fa-clock"></i> Horarios de Atención
+                    </h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                        <div
+                            style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #0dc3ff;">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                <span style="font-size: 24px;">🌅</span>
+                                <strong style="color: #023b48;">Turno Mañana</strong>
+                            </div>
+                            <div style="color: #666;">8:00 AM - 4:00 PM</div>
+                            <div style="margin-top: 8px; font-size: 13px; color: #888;">3 doctores rotan en este turno
+                            </div>
+                        </div>
+                        <div
+                            style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #ff9800;">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                <span style="font-size: 24px;">🌆</span>
+                                <strong style="color: #023b48;">Turno Tarde</strong>
+                            </div>
+                            <div style="color: #666;">12:00 PM - 8:00 PM</div>
+                            <div style="margin-top: 8px; font-size: 13px; color: #888;">2 doctores rotan en este turno
+                            </div>
+                        </div>
+                        <div
+                            style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #4caf50;">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                <span style="font-size: 24px;">⏰</span>
+                                <strong style="color: #023b48;">Solapamiento</strong>
+                            </div>
+                            <div style="color: #666;">12:00 PM - 4:00 PM</div>
+                            <div style="margin-top: 8px; font-size: 13px; color: #888;">Mayor capacidad de atención
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lista de doctores -->
                 <div class="card">
+                    <h3 style="margin-bottom: 15px; color: #023b48;">
+                        <i class="fas fa-list"></i> Lista de Doctores
+                    </h3>
                     <div class="filters">
-                        <select id="filtroCargoTrabajadores" class="filter-input">
-                            <option value="">Todos los cargos</option>
-                            <option value="veterinario">Veterinario</option>
-                            <option value="asistente">Asistente</option>
-                            <option value="recepcionista">Recepcionista</option>
-                            <option value="administrador">Administrador</option>
+                        <select id="filtroTurnoDoctor" class="filter-input">
+                            <option value="">Todos los turnos</option>
+                            <option value="mañana">Turno Mañana (8:00-16:00)</option>
+                            <option value="tarde">Turno Tarde (12:00-20:00)</option>
                         </select>
+                        <select id="filtroDiaDoctor" class="filter-input">
+                            <option value="">Todos los días</option>
+                            <option value="Lunes">Lunes</option>
+                            <option value="Martes">Martes</option>
+                            <option value="Miércoles">Miércoles</option>
+                            <option value="Jueves">Jueves</option>
+                            <option value="Viernes">Viernes</option>
+                            <option value="Sábado">Sábado</option>
+                            <option value="Domingo">Domingo</option>
+                        </select>
+                        <button class="btn btn-sm btn-primary" onclick="aplicarFiltrosDoctores()">
+                            <i class="fas fa-filter"></i> Filtrar
+                        </button>
                     </div>
                     <div id="tablaTrabajadores" class="table-container">
                         <p class="loading">Cargando...</p>

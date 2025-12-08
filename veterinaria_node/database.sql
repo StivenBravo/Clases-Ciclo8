@@ -10,7 +10,7 @@ CREATE TABLE usuarios (
     username VARCHAR(50) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
     nombre_completo VARCHAR(150) NOT NULL,
-    rol ENUM('admin', 'veterinario', 'recepcionista') DEFAULT 'recepcionista',
+    rol ENUM('admin', 'veterinario', 'recepcionista', 'cliente') DEFAULT 'recepcionista',
     estado ENUM('activo', 'inactivo') DEFAULT 'activo',
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     ultimo_acceso TIMESTAMP NULL,
@@ -29,7 +29,10 @@ CREATE TABLE clientes (
     direccion VARCHAR(200),
     fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     estado ENUM('activo', 'inactivo') DEFAULT 'activo',
-    INDEX idx_dni (dni)
+    usuario_id INT NULL,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL,
+    INDEX idx_dni (dni),
+    INDEX idx_usuario (usuario_id)
 );
 
 -- Tabla de Mascotas
@@ -151,15 +154,15 @@ CREATE TABLE detalle_ventas (
 
 -- Datos de ejemplo
 
--- Usuarios de ejemplo (contraseña: admin123 y user123)
--- Las contraseñas deben ser hasheadas con bcrypt en el backend
--- Estos INSERT son solo para referencia, ejecutar el script de creación de usuarios
-INSERT INTO usuarios (username, password, nombre_completo, rol, estado) VALUES
-('admin', '$2b$10$8ZqhX9Z0YH6b3mX8gKZZDeGZ6K9Z0YH6b3mX8gKZZDeGZ6K9Z0YH6', 'Administrador Sistema', 'admin', 'activo'),
-('recepcion', '$2b$10$8ZqhX9Z0YH6b3mX8gKZZDeGZ6K9Z0YH6b3mX8gKZZDeGZ6K9Z0YH6', 'Recepcionista Principal', 'recepcionista', 'activo'),
-('drvet', '$2b$10$8ZqhX9Z0YH6b3mX8gKZZDeGZ6K9Z0YH6b3mX8gKZZDeGZ6K9Z0YH6', 'Dr. Veterinario', 'veterinario', 'activo');
+-- NOTA: Para crear usuarios de prueba, ejecuta: node scripts/create-test-users.js
+-- Los usuarios se crearán con contraseñas hasheadas usando bcryptjs
 
-INSERT INTO trabajadores (dni, nombres, apellidos, cargo, especialidad, telefono, email, fecha_contratacion, salario) VALUES
+-- Usuarios de ejemplo (usar el script create-test-users.js para crearlos correctamente):
+-- admin / admin123 (rol: admin)
+-- recepcion / recepcion123 (rol: recepcionista)
+-- drvet / vet123 (rol: veterinario)
+
+-- Trabajadores de ejemplo
 ('12345678', 'Carlos', 'Mendoza Ruiz', 'veterinario', 'Medicina General', '987654321', 'cmendoza@vet.com', '2023-01-15', 3500.00),
 ('87654321', 'Ana', 'García López', 'veterinario', 'Cirugía', '987654322', 'agarcia@vet.com', '2023-02-01', 4000.00),
 ('11223344', 'Luis', 'Torres Vega', 'asistente', NULL, '987654323', 'ltorres@vet.com', '2023-03-10', 1500.00),

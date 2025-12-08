@@ -600,6 +600,174 @@ tr:hover {
     color: var(--text-light);
 }
 
+/* Admin Calendar Styles */
+.admin-calendar {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.admin-day-column {
+    background: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    overflow: hidden;
+    min-height: 300px;
+}
+
+.admin-day-header {
+    background: #023b48;
+    color: white;
+    padding: 12px 8px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.admin-day-header .date {
+    display: block;
+    font-size: 20px;
+    margin-top: 5px;
+}
+
+.admin-time-slots {
+    padding: 8px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.admin-time-slot {
+    padding: 10px 8px;
+    margin: 5px 0;
+    border-radius: 6px;
+    font-size: 12px;
+    text-align: center;
+    position: relative;
+    transition: all 0.3s;
+}
+
+.admin-time-slot.available {
+    background: #e8f8ff;
+    color: #0dc3ff;
+    border: 1px solid #0dc3ff;
+    cursor: pointer;
+}
+
+.admin-time-slot.available:hover {
+    background: #0dc3ff;
+    color: white;
+    transform: scale(1.02);
+}
+
+.admin-time-slot.occupied {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffc107;
+    font-weight: 500;
+}
+
+.admin-time-slot.occupied .slot-info {
+    font-size: 10px;
+    margin-top: 3px;
+    display: block;
+}
+
+.admin-time-slot.past {
+    background: #f5f5f5;
+    color: #999;
+    border: 1px solid #ddd;
+    text-decoration: line-through;
+}
+
+/* Botones de acción en tabla de citas */
+.btn-aprobar {
+    background-color: #10B981;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 5px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-aprobar:hover {
+    background-color: #059669;
+    transform: translateY(-1px);
+}
+
+.btn-cancelar-cita {
+    background-color: #EF4444;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 5px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-cancelar-cita:hover {
+    background-color: #DC2626;
+    transform: translateY(-1px);
+}
+
+.cita-actions {
+    display: flex;
+    gap: 5px;
+    justify-content: center;
+}
+
+/* Badge de estado */
+.badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.badge-reserva {
+    background-color: #FEF3C7;
+    color: #92400E;
+}
+
+.badge-atendida {
+    background-color: #D1FAE5;
+    color: #065F46;
+}
+
+.badge-cancelada {
+    background-color: #FEE2E2;
+    color: #991B1B;
+}
+
+/* Responsive admin calendar */
+@media (max-width: 1400px) {
+    .admin-calendar {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (max-width: 992px) {
+    .admin-calendar {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .admin-calendar {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 576px) {
+    .admin-calendar {
+        grid-template-columns: 1fr;
+    }
+}
+
 @keyframes fadeIn {
     from {
         opacity: 0;

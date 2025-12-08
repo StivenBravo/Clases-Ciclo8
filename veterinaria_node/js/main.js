@@ -43,7 +43,7 @@ function verificarSesion() {
     if (confirm('¿Estás seguro de cerrar sesión?')) {
         sessionStorage.removeItem('user');
         localStorage.removeItem('user');
-        window.location.href = '/login';
+        window.location.href = '/';
     }
 }
 
@@ -125,6 +125,7 @@ async function loadSectionData(section) {
             break;
         case 'citas':
             loadCitas();
+            initAdminCalendar(); // Inicializar calendario admin
             break;
         case 'productos':
             loadProductos();
@@ -382,17 +383,27 @@ function mostrarCitas(citasArray) {
                         <td>${cita.nombres} ${cita.apellido_paterno}</td>
                         <td>Dr. ${cita.vet_nombres} ${cita.vet_apellidos}</td>
                         <td>${formatTipoCita(cita.tipo)}</td>
-                        <td><span class="badge badge-${getBadgeClass(cita.estado)}">${formatEstado(cita.estado)}</span></td>
+                        <td><span class="badge badge-${cita.estado}">${formatEstado(cita.estado)}</span></td>
                         <td>
-                            <button class="btn btn-sm btn-primary" onclick="verCita(${cita.id})">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                            <button class="btn btn-sm btn-warning" onclick="editarCita(${cita.id})">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="btn btn-sm btn-danger" onclick="eliminarCita(${cita.id})">
-                                <i class="fas fa-trash"></i>
-                            </button>
+                            <div class="cita-actions">
+                                ${cita.estado === 'reserva' ? `
+                                    <button class="btn-aprobar" onclick="aprobarCita(${cita.id})" title="Aprobar">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                    <button class="btn-cancelar-cita" onclick="cancelarCitaAdmin(${cita.id})" title="Cancelar">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                ` : ''}
+                                <button class="btn btn-sm btn-primary" onclick="verCita(${cita.id})" title="Ver">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-warning" onclick="editarCita(${cita.id})" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="eliminarCita(${cita.id})" title="Eliminar">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
                         </td>
                     </tr>
                 `).join('')}
@@ -401,6 +412,194 @@ function mostrarCitas(citasArray) {
     `;
 
     container.innerHTML = html;
+}
+
+// Calendario Admin - Variables
+let adminWeekStart = new Date();
+let adminDisponibilidad = { citas: [], veterinarios: [] };
+
+// Inicializar calendario admin
+async function initAdminCalendar() {
+    setAdminCurrentWeek();
+    await loadAdminDisponibilidad();
+}
+
+// Establecer semana actual
+function setAdminCurrentWeek() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    adminWeekStart = new Date(today);
+    adminWeekStart.setDate(today.getDate() - today.getDay());
+}
+
+// Cargar disponibilidad para admin
+async function loadAdminDisponibilidad() {
+    try {
+        const response = await fetch(`${API_URL}/citas/disponibilidad`);
+        const result = await response.json();
+
+        if (result.success) {
+            adminDisponibilidad = result.data;
+            renderAdminCalendar();
+        }
+    } catch (error) {
+        console.error('Error al cargar disponibilidad:', error);
+    }
+}
+
+// Renderizar calendario admin
+function renderAdminCalendar() {
+    updateAdminWeekRange();
+    const calendar = document.getElementById('adminCalendar');
+    if (!calendar) return;
+
+    calendar.innerHTML = '';
+
+    const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    for (let i = 0; i < 7; i++) {
+        const date = new Date(adminWeekStart);
+        date.setDate(adminWeekStart.getDate() + i);
+
+        const dayColumn = document.createElement('div');
+        dayColumn.className = 'admin-day-column';
+
+        const dayHeader = document.createElement('div');
+        dayHeader.className = 'admin-day-header';
+        dayHeader.innerHTML = `
+            ${days[date.getDay()]}
+            <span class="date">${date.getDate()}/${date.getMonth() + 1}</span>
+        `;
+
+        const timeSlots = document.createElement('div');
+        timeSlots.className = 'admin-time-slots';
+
+        // Generar horarios de 8am a 8pm
+        for (let hour = 8; hour < 20; hour++) {
+            const slotTime = new Date(date);
+            slotTime.setHours(hour, 0, 0, 0);
+
+            const timeSlot = document.createElement('div');
+            timeSlot.className = 'admin-time-slot';
+
+            const timeStr = `${hour.toString().padStart(2, '0')}:00`;
+            const isPast = slotTime < today;
+
+            // Verificar si hay citas en este horario
+            const citasEnHorario = adminDisponibilidad.citas.filter(cita => {
+                const citaDate = new Date(cita.fecha_cita);
+                return citaDate.getTime() === slotTime.getTime() &&
+                    ['reserva', 'atendida'].includes(cita.estado);
+            });
+
+            if (isPast) {
+                timeSlot.classList.add('past');
+                timeSlot.innerHTML = `<div>${timeStr}</div>`;
+            } else if (citasEnHorario.length > 0) {
+                timeSlot.classList.add('occupied');
+                timeSlot.innerHTML = `
+                    <div>${timeStr}</div>
+                    <span class="slot-info">${citasEnHorario.length} cita(s)</span>
+                `;
+            } else {
+                timeSlot.classList.add('available');
+                timeSlot.innerHTML = `<div>${timeStr}</div>`;
+                timeSlot.onclick = () => crearCitaRapida(slotTime);
+            }
+
+            timeSlots.appendChild(timeSlot);
+        }
+
+        dayColumn.appendChild(dayHeader);
+        dayColumn.appendChild(timeSlots);
+        calendar.appendChild(dayColumn);
+    }
+}
+
+// Actualizar rango de semana admin
+function updateAdminWeekRange() {
+    const rangeElement = document.getElementById('adminWeekRange');
+    if (!rangeElement) return;
+
+    const weekEnd = new Date(adminWeekStart);
+    weekEnd.setDate(adminWeekStart.getDate() + 6);
+
+    const options = { day: 'numeric', month: 'short' };
+    const startStr = adminWeekStart.toLocaleDateString('es-ES', options);
+    const endStr = weekEnd.toLocaleDateString('es-ES', options);
+
+    rangeElement.textContent = `${startStr} - ${endStr}`;
+}
+
+// Cambiar semana en admin
+function cambiarSemanaAdmin(direction) {
+    adminWeekStart.setDate(adminWeekStart.getDate() + (direction * 7));
+    loadAdminDisponibilidad();
+}
+
+// Crear cita rápida desde calendario
+function crearCitaRapida(datetime) {
+    // Pre-llenar el formulario con la fecha seleccionada
+    mostrarModalCita();
+    setTimeout(() => {
+        const dateInput = document.querySelector('#modalContainer input[type="datetime-local"]');
+        if (dateInput) {
+            const localDatetime = new Date(datetime.getTime() - (datetime.getTimezoneOffset() * 60000));
+            dateInput.value = localDatetime.toISOString().slice(0, 16);
+        }
+    }, 100);
+}
+
+// Aprobar cita
+async function aprobarCita(id) {
+    if (!confirm('¿Está seguro de aprobar esta cita?')) return;
+
+    try {
+        const response = await fetch(`${API_URL}/citas/${id}/aprobar`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            alert('✅ Cita aprobada exitosamente');
+            await loadCitas();
+            await loadAdminDisponibilidad();
+        } else {
+            alert('❌ ' + result.message);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('❌ Error al aprobar la cita');
+    }
+}
+
+// Cancelar cita (desde admin)
+async function cancelarCitaAdmin(id) {
+    if (!confirm('¿Está seguro de cancelar esta cita?')) return;
+
+    try {
+        const response = await fetch(`${API_URL}/citas/${id}/cancelar`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            alert('✅ Cita cancelada exitosamente');
+            await loadCitas();
+            await loadAdminDisponibilidad();
+        } else {
+            alert('❌ ' + result.message);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('❌ Error al cancelar la cita');
+    }
 }
 
 // PRODUCTOS

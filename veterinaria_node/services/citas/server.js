@@ -14,6 +14,156 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'OK', service: 'Citas', timestamp: new Date().toISOString() });
 });
 
+// Test endpoint
+app.get('/api/test-disponibilidad', async (req, res) => {
+    try {
+        // Prueba simple de veterinarios
+        const [vets] = await pool.query('SELECT COUNT(*) as total FROM trabajadores WHERE cargo = "veterinario"');
+        const [turnos] = await pool.query('SELECT COUNT(*) as total FROM turnos_doctores');
+
+        res.json({
+            success: true,
+            veterinarios_count: vets[0].total,
+            turnos_count: turnos[0].total,
+            message: 'Prueba de conexión exitosa'
+        });
+    } catch (error) {
+        res.json({ success: false, error: error.message });
+    }
+});
+
+// GET - Disponibilidad de horarios (DEBE IR ANTES DE :id)
+app.get('/api/citas/disponibilidad', async (req, res) => {
+    try {
+        console.log('=== Endpoint /api/citas/disponibilidad llamado ===');
+
+        // Obtener citas de la semana actual (8am a 8pm)
+        const [citas] = await pool.query(`
+            SELECT fecha_cita, veterinario_id, estado
+            FROM citas
+            WHERE fecha_cita >= CURDATE() 
+            AND fecha_cita < DATE_ADD(CURDATE(), INTERVAL 7 DAY)
+            AND estado IN ('reserva', 'atendida')
+            AND HOUR(fecha_cita) >= 8 
+            AND HOUR(fecha_cita) < 20
+            ORDER BY fecha_cita ASC
+        `);
+        console.log('Citas encontradas:', citas.length);
+
+        // Obtener veterinarios activos con sus turnos y días de trabajo
+        const [veterinarios] = await pool.query(`
+            SELECT 
+                t.id, 
+                t.nombres, 
+                t.apellidos, 
+                t.especialidad,
+                t.turno,
+                GROUP_CONCAT(td.dia_semana ORDER BY 
+                    FIELD(td.dia_semana, 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo')
+                ) as dias_trabajo
+            FROM trabajadores t
+            LEFT JOIN turnos_doctores td ON t.id = td.trabajador_id AND td.activo = TRUE
+            WHERE t.cargo = 'veterinario' AND t.estado = 'activo'
+            GROUP BY t.id, t.nombres, t.apellidos, t.especialidad, t.turno
+            ORDER BY t.nombres
+        `);
+        console.log('Veterinarios encontrados:', veterinarios.length);
+
+        const response = {
+            success: true,
+            data: {
+                citas: citas,
+                veterinarios: veterinarios.map(v => ({
+                    ...v,
+                    dias_trabajo: v.dias_trabajo ? v.dias_trabajo.split(',') : []
+                }))
+            }
+        };
+
+        res.json(response);
+    } catch (error) {
+        console.error('Error en /api/citas/disponibilidad:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// GET - Doctores disponibles (DEBE IR ANTES DE :id)
+app.get('/api/citas/doctores-disponibles', async (req, res) => {
+    try {
+        const { fecha, hora } = req.query;
+        if (!fecha || !hora) {
+            return res.status(400).json({ success: false, message: 'Se requiere fecha y hora' });
+        }
+
+        const fechaCita = new Date(`${fecha}T${hora}:00`);
+        const horaNum = parseInt(hora);
+        const diaSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'][fechaCita.getDay()];
+
+        let turnoRequerido = '';
+        if (horaNum >= 8 && horaNum < 12) turnoRequerido = 'mañana';
+        else if (horaNum >= 12 && horaNum < 16) turnoRequerido = 'ambos';
+        else if (horaNum >= 16 && horaNum < 20) turnoRequerido = 'tarde';
+
+        let query = `
+            SELECT t.id, t.nombres, t.apellidos, t.especialidad, t.turno
+            FROM trabajadores t
+            INNER JOIN turnos_doctores td ON t.id = td.trabajador_id
+            WHERE t.cargo = 'veterinario' AND t.estado = 'activo'
+            AND td.dia_semana = ? AND td.activo = TRUE
+        `;
+
+        if (turnoRequerido === 'ambos') query += ` AND t.turno IN ('mañana', 'tarde')`;
+        else query += ` AND t.turno = ?`;
+        query += ` ORDER BY t.nombres`;
+
+        const params = turnoRequerido === 'ambos' ? [diaSemana] : [diaSemana, turnoRequerido];
+        const [doctores] = await pool.query(query, params);
+
+        res.json({ success: true, data: doctores, turno: turnoRequerido, dia: diaSemana });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// GET - Citas del día (DEBE IR ANTES DE :id)
+app.get('/api/citas/fecha/hoy', async (req, res) => {
+    try {
+        const [rows] = await pool.query(`
+            SELECT c.*, 
+                   m.nombre as mascota_nombre, m.especie,
+                   cl.nombres, cl.apellido_paterno, cl.apellido_materno, cl.telefono,
+                   t.nombres as vet_nombres, t.apellidos as vet_apellidos
+            FROM citas c
+            INNER JOIN mascotas m ON c.mascota_id = m.id
+            INNER JOIN clientes cl ON m.cliente_id = cl.id
+            INNER JOIN trabajadores t ON c.veterinario_id = t.id
+            WHERE DATE(c.fecha_cita) = CURDATE()
+            ORDER BY c.fecha_cita ASC
+        `);
+
+        res.json({ success: true, data: rows, count: rows.length });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// GET - Citas de una mascota (DEBE IR ANTES DE :id)
+app.get('/api/citas/mascota/:mascotaId', async (req, res) => {
+    try {
+        const [rows] = await pool.query(`
+            SELECT c.*, t.nombres as vet_nombres, t.apellidos as vet_apellidos
+            FROM citas c
+            INNER JOIN trabajadores t ON c.veterinario_id = t.id
+            WHERE c.mascota_id = ?
+            ORDER BY c.fecha_cita DESC
+        `, [req.params.mascotaId]);
+
+        res.json({ success: true, data: rows, count: rows.length });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
 // GET - Listar todas las citas
 app.get('/api/citas', async (req, res) => {
     try {
@@ -53,7 +203,7 @@ app.get('/api/citas', async (req, res) => {
     }
 });
 
-// GET - Obtener cita por ID
+// GET - Obtener cita por ID (DEBE IR AL FINAL)
 app.get('/api/citas/:id', async (req, res) => {
     try {
         const [rows] = await pool.query(`
@@ -77,40 +227,149 @@ app.get('/api/citas/:id', async (req, res) => {
     }
 });
 
-// GET - Citas de una mascota
-app.get('/api/citas/mascota/:mascotaId', async (req, res) => {
+// POST - Reservar cita desde el frontend (clientes registrados)
+app.post('/api/citas/reservar', async (req, res) => {
     try {
-        const [rows] = await pool.query(`
-            SELECT c.*, t.nombres as vet_nombres, t.apellidos as vet_apellidos
-            FROM citas c
-            INNER JOIN trabajadores t ON c.veterinario_id = t.id
-            WHERE c.mascota_id = ?
-            ORDER BY c.fecha_cita DESC
-        `, [req.params.mascotaId]);
+        const { dni, nombre_mascota, especie, veterinario_id, fecha_cita, motivo, tipo } = req.body;
 
-        res.json({ success: true, data: rows, count: rows.length });
+        console.log('📝 Solicitud de reserva recibida:', req.body);
+
+        // Validar campos requeridos
+        if (!dni || !nombre_mascota || !especie || !veterinario_id || !fecha_cita || !motivo || !tipo) {
+            return res.status(400).json({
+                success: false,
+                message: 'Faltan campos requeridos'
+            });
+        }
+
+        // Validar horario de atención (8am a 8pm)
+        const fechaCita = new Date(fecha_cita);
+        const hora = fechaCita.getHours();
+
+        if (hora < 8 || hora >= 20) {
+            return res.status(400).json({
+                success: false,
+                message: 'El horario de atención es de 8:00 AM a 8:00 PM'
+            });
+        }
+
+        // Buscar cliente por DNI
+        const [cliente] = await pool.query('SELECT id, usuario_id FROM clientes WHERE dni = ? AND estado = "activo"', [dni]);
+
+        if (cliente.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Cliente no encontrado. Debe registrarse primero.'
+            });
+        }
+
+        const cliente_id = cliente[0].id;
+
+        // Verificar que el veterinario existe
+        const [veterinario] = await pool.query(
+            'SELECT id FROM trabajadores WHERE id = ? AND cargo = "veterinario" AND estado = "activo"',
+            [veterinario_id]
+        );
+
+        if (veterinario.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Veterinario no encontrado'
+            });
+        }
+
+        // Verificar disponibilidad del veterinario
+        const [conflicto] = await pool.query(
+            'SELECT id FROM citas WHERE veterinario_id = ? AND fecha_cita = ? AND estado IN ("reserva", "atendida")',
+            [veterinario_id, fecha_cita]
+        );
+
+        if (conflicto.length > 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Este horario ya no está disponible. Por favor elija otro.'
+            });
+        }
+
+        // Buscar o crear mascota
+        let mascota_id;
+        const [mascotaExistente] = await pool.query(
+            'SELECT id FROM mascotas WHERE cliente_id = ? AND nombre = ? AND especie = ?',
+            [cliente_id, nombre_mascota, especie]
+        );
+
+        if (mascotaExistente.length > 0) {
+            mascota_id = mascotaExistente[0].id;
+            console.log('✓ Mascota existente encontrada:', mascota_id);
+        } else {
+            // Crear nueva mascota
+            const [resultMascota] = await pool.query(
+                'INSERT INTO mascotas (cliente_id, nombre, especie, sexo, estado) VALUES (?, ?, ?, ?, ?)',
+                [cliente_id, nombre_mascota, especie, 'macho', 'activo']
+            );
+            mascota_id = resultMascota.insertId;
+            console.log('✓ Nueva mascota creada:', mascota_id);
+        }
+
+        // Crear la cita con estado 'reserva'
+        const [resultCita] = await pool.query(
+            'INSERT INTO citas (mascota_id, veterinario_id, fecha_cita, motivo, tipo, estado) VALUES (?, ?, ?, ?, ?, ?)',
+            [mascota_id, veterinario_id, fecha_cita, motivo, tipo, 'reserva']
+        );
+
+        console.log('✅ Cita reservada exitosamente:', resultCita.insertId);
+
+        res.status(201).json({
+            success: true,
+            message: 'Cita reservada exitosamente. Espere la aprobación del administrador.',
+            data: {
+                cita_id: resultCita.insertId,
+                mascota_id: mascota_id
+            }
+        });
+    } catch (error) {
+        console.error('❌ Error al reservar cita:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// PUT - Aprobar cita
+app.put('/api/citas/:id/aprobar', async (req, res) => {
+    try {
+        const [result] = await pool.query(
+            'UPDATE citas SET estado = "atendida" WHERE id = ? AND estado = "reserva"',
+            [req.params.id]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Cita no encontrada o ya fue procesada'
+            });
+        }
+
+        res.json({ success: true, message: 'Cita aprobada exitosamente' });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 });
 
-// GET - Citas del día
-app.get('/api/citas/fecha/hoy', async (req, res) => {
+// PUT - Cancelar cita
+app.put('/api/citas/:id/cancelar', async (req, res) => {
     try {
-        const [rows] = await pool.query(`
-            SELECT c.*, 
-                   m.nombre as mascota_nombre, m.especie,
-                   cl.nombres, cl.apellido_paterno, cl.apellido_materno, cl.telefono,
-                   t.nombres as vet_nombres, t.apellidos as vet_apellidos
-            FROM citas c
-            INNER JOIN mascotas m ON c.mascota_id = m.id
-            INNER JOIN clientes cl ON m.cliente_id = cl.id
-            INNER JOIN trabajadores t ON c.veterinario_id = t.id
-            WHERE DATE(c.fecha_cita) = CURDATE()
-            ORDER BY c.fecha_cita ASC
-        `);
+        const [result] = await pool.query(
+            'UPDATE citas SET estado = "cancelada" WHERE id = ?',
+            [req.params.id]
+        );
 
-        res.json({ success: true, data: rows, count: rows.length });
+        if (result.affectedRows === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Cita no encontrada'
+            });
+        }
+
+        res.json({ success: true, message: 'Cita cancelada exitosamente' });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -132,11 +391,11 @@ app.post('/api/citas', async (req, res) => {
         // Validar horario de atención (8am a 6pm)
         const fechaCita = new Date(fecha_cita);
         const hora = fechaCita.getHours();
-        
+
         if (hora < 8 || hora >= 18) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'El horario de atención es de 8:00 AM a 6:00 PM. Por favor, seleccione otra hora.' 
+            return res.status(400).json({
+                success: false,
+                message: 'El horario de atención es de 8:00 AM a 6:00 PM. Por favor, seleccione otra hora.'
             });
         }
 
@@ -194,11 +453,11 @@ app.put('/api/citas/:id', async (req, res) => {
         if (fecha_cita) {
             const fechaCita = new Date(fecha_cita);
             const hora = fechaCita.getHours();
-            
+
             if (hora < 8 || hora >= 18) {
-                return res.status(400).json({ 
-                    success: false, 
-                    message: 'El horario de atención es de 8:00 AM a 6:00 PM. Por favor, seleccione otra hora.' 
+                return res.status(400).json({
+                    success: false,
+                    message: 'El horario de atención es de 8:00 AM a 6:00 PM. Por favor, seleccione otra hora.'
                 });
             }
         }
