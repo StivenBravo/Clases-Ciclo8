@@ -318,18 +318,23 @@
         document.getElementById('prevWeek').addEventListener('click', () => {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
+            const todayWeekStart = new Date(today);
+            todayWeekStart.setDate(today.getDate() - today.getDay());
 
             const newWeek = new Date(currentWeekStart);
             newWeek.setDate(currentWeekStart.getDate() - 7);
 
-            if (newWeek >= today) {
+            // Permitir retroceder hasta la semana actual
+            if (newWeek >= todayWeekStart) {
                 currentWeekStart = newWeek;
                 loadDisponibilidad();
             }
         });
 
         document.getElementById('nextWeek').addEventListener('click', () => {
-            currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+            const newWeek = new Date(currentWeekStart);
+            newWeek.setDate(currentWeekStart.getDate() + 7);
+            currentWeekStart = newWeek;
             loadDisponibilidad();
         });
 

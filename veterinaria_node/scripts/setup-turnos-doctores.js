@@ -34,11 +34,10 @@ async function setupTurnosDoctores() {
         `);
         console.log('✓ Tabla turnos_doctores creada');
 
-        // 3. Limpiar trabajadores existentes que no sean veterinarios
-        console.log('\n🧹 Limpiando datos existentes...');
-        await pool.execute(`DELETE FROM trabajadores WHERE cargo != 'veterinario'`);
-        await pool.execute(`DELETE FROM trabajadores WHERE cargo = 'veterinario'`);
-        console.log('✓ Datos limpiados');
+        // 3. Limpiar solo la tabla de turnos
+        console.log('\n🧹 Limpiando turnos existentes...');
+        await pool.execute(`DELETE FROM turnos_doctores`);
+        console.log('✓ Turnos limpiados');
 
         // 4. Crear 5 doctores con turnos específicos
         console.log('\n👨‍⚕️ Creando doctores con turnos...\n');
@@ -99,21 +98,32 @@ async function setupTurnosDoctores() {
         ];
 
         for (const doctor of doctores) {
-            // Insertar doctor
+            // Insertar o actualizar doctor
             const [result] = await pool.execute(`
                 INSERT INTO trabajadores 
                 (dni, nombres, apellidos, cargo, especialidad, telefono, email, fecha_contratacion, salario, turno, estado)
                 VALUES (?, ?, ?, 'veterinario', ?, ?, ?, CURDATE(), 3500.00, ?, 'activo')
+                ON DUPLICATE KEY UPDATE
+                    nombres = VALUES(nombres),
+                    apellidos = VALUES(apellidos),
+                    especialidad = VALUES(especialidad),
+                    telefono = VALUES(telefono),
+                    email = VALUES(email),
+                    turno = VALUES(turno),
+                    estado = 'activo'
             `, [doctor.dni, doctor.nombres, doctor.apellidos, doctor.especialidad,
             doctor.telefono, doctor.email, doctor.turno]);
 
-            const trabajadorId = result.insertId;
+            // Obtener el ID del trabajador (ya sea insertado o actualizado)
+            const [trabajador] = await pool.execute(`SELECT id FROM trabajadores WHERE dni = ?`, [doctor.dni]);
+            const trabajadorId = trabajador[0].id;
 
-            // Insertar días de trabajo
+            // Insertar días de trabajo (reemplazando existentes)
             for (const dia of doctor.dias) {
                 await pool.execute(`
                     INSERT INTO turnos_doctores (trabajador_id, dia_semana, activo)
                     VALUES (?, ?, TRUE)
+                    ON DUPLICATE KEY UPDATE activo = TRUE
                 `, [trabajadorId, dia]);
             }
 
