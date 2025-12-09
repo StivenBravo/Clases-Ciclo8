@@ -41,9 +41,9 @@
                 <i class="fas fa-user-md"></i>
                 <span>Doctores</span>
             </a>
-            <a href="#" class="nav-item" data-section="tratamientos">
-                <i class="fas fa-notes-medical"></i>
-                <span>Tratamientos</span>
+            <a href="#" class="nav-item" data-section="reportes">
+                <i class="fas fa-chart-bar"></i>
+                <span>Reportes</span>
             </a>
         </nav>
     </aside>
@@ -125,7 +125,6 @@
             <!-- Clientes Section -->
             <section id="clientes" class="section">
                 <div class="section-header">
-                    <h2>Gestión de Clientes</h2>
                     <button class="btn btn-primary" onclick="mostrarModalCliente()">
                         <i class="fas fa-plus"></i> Nuevo Cliente
                     </button>
@@ -144,7 +143,6 @@
             <!-- Mascotas Section -->
             <section id="mascotas" class="section">
                 <div class="section-header">
-                    <h2>Gestión de Mascotas</h2>
                     <button class="btn btn-primary" onclick="mostrarModalMascota()">
                         <i class="fas fa-plus"></i> Nueva Mascota
                     </button>
@@ -163,7 +161,6 @@
             <!-- Citas Section -->
             <section id="citas" class="section">
                 <div class="section-header">
-                    <h2>Gestión de Citas</h2>
                     <button class="btn btn-primary" onclick="mostrarModalCita()">
                         <i class="fas fa-plus"></i> Nueva Cita
                     </button>
@@ -216,7 +213,6 @@
             <!-- Productos Section -->
             <section id="productos" class="section">
                 <div class="section-header">
-                    <h2>Gestión de Productos</h2>
                     <button class="btn btn-primary" onclick="mostrarModalProducto()">
                         <i class="fas fa-plus"></i> Nuevo Producto
                     </button>
@@ -242,7 +238,6 @@
             <!-- Doctores Section -->
             <section id="trabajadores" class="section">
                 <div class="section-header">
-                    <h2>Gestión de Doctores</h2>
                     <button class="btn btn-primary" onclick="mostrarModalDoctor()">
                         <i class="fas fa-plus"></i> Nuevo Doctor
                     </button>
@@ -319,17 +314,60 @@
                 </div>
             </section>
 
-            <!-- Tratamientos Section -->
-            <section id="tratamientos" class="section">
+            <!-- Reportes Section -->
+            <section id="reportes" class="section">
                 <div class="section-header">
-                    <h2>Gestión de Tratamientos</h2>
-                    <button class="btn btn-primary" onclick="mostrarModalTratamiento()">
-                        <i class="fas fa-plus"></i> Nuevo Tratamiento
-                    </button>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-primary" onclick="generarReporte('dia')">Día</button>
+                        <button class="btn btn-primary" onclick="generarReporte('semana')">Semana</button>
+                        <button class="btn btn-primary" onclick="generarReporte('mes')">Mes</button>
+                    </div>
                 </div>
+
+                <!-- Reporte de Citas -->
+                <div class="card" style="margin-bottom: 20px;">
+                    <h3 style="color: #023b48; margin-bottom: 10px;">
+                        Reporte de Atenciones Completadas <span id="periodo-citas"
+                            style="color: #0dc3ff; font-size: 16px;"></span>
+                    </h3>
+                    <div
+                        style="display: flex; justify-content: center; margin-bottom: 20px; padding: 15px; background: #f5f5f5; border-radius: 4px;">
+                        <div style="text-align: center;">
+                            <div style="font-size: 48px; font-weight: bold; color: #4CAF50;" id="total-atendidas">0
+                            </div>
+                            <div style="font-size: 16px; color: #666;">Total Atenciones</div>
+                        </div>
+                    </div>
+                    <div id="tablaCitasReporte" class="table-container">
+                        <p class="loading">Seleccione un periodo para ver el reporte</p>
+                    </div>
+                </div>
+
+                <!-- Reporte de Ventas -->
                 <div class="card">
-                    <div id="tablaTratamientos" class="table-container">
-                        <p class="loading">Cargando...</p>
+                    <h3 style="color: #023b48; margin-bottom: 10px;">
+                        Reporte de Ventas de Productos <span id="periodo-productos"
+                            style="color: #0dc3ff; font-size: 16px;"></span>
+                    </h3>
+                    <div
+                        style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; padding: 10px; background: #f5f5f5; border-radius: 4px;">
+                        <div style="text-align: center;">
+                            <div style="font-size: 32px; font-weight: bold; color: #2196F3;" id="total-ventas">0</div>
+                            <div style="font-size: 14px; color: #666;">Total Ventas</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 32px; font-weight: bold; color: #FF9800;" id="productos-vendidos">0
+                            </div>
+                            <div style="font-size: 14px; color: #666;">Productos Vendidos</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 32px; font-weight: bold; color: #4CAF50;" id="total-ingreso-ventas">
+                                S/ 0.00</div>
+                            <div style="font-size: 14px; color: #666;">Total Ingresos</div>
+                        </div>
+                    </div>
+                    <div id="tablaProductosReporte" class="table-container">
+                        <p class="loading">Seleccione un periodo para ver el reporte</p>
                     </div>
                 </div>
             </section>

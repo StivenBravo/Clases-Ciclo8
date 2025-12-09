@@ -43,7 +43,7 @@ app.get('/api/citas/disponibilidad', async (req, res) => {
             FROM citas
             WHERE fecha_cita >= CURDATE() 
             AND fecha_cita < DATE_ADD(CURDATE(), INTERVAL 7 DAY)
-            AND estado IN ('reserva', 'atendida')
+            AND estado IN ('reserva', 'citada', 'atendida')
             AND HOUR(fecha_cita) >= 8 
             AND HOUR(fecha_cita) < 20
             ORDER BY fecha_cita ASC
@@ -243,8 +243,8 @@ app.post('/api/citas/reservar', async (req, res) => {
         }
 
         // Validar horario de atención (8am a 8pm)
-        const fechaCita = new Date(fecha_cita);
-        const hora = fechaCita.getHours();
+        // Extraer hora directamente del string para evitar problemas de zona horaria
+        const hora = parseInt(fecha_cita.split(' ')[1].split(':')[0]);
 
         if (hora < 8 || hora >= 20) {
             return res.status(400).json({
@@ -333,11 +333,11 @@ app.post('/api/citas/reservar', async (req, res) => {
     }
 });
 
-// PUT - Aprobar cita
+// PUT - Aprobar cita (cambiar a estado citada)
 app.put('/api/citas/:id/aprobar', async (req, res) => {
     try {
         const [result] = await pool.query(
-            'UPDATE citas SET estado = "atendida" WHERE id = ? AND estado = "reserva"',
+            'UPDATE citas SET estado = "citada" WHERE id = ? AND estado = "reserva"',
             [req.params.id]
         );
 
@@ -388,14 +388,13 @@ app.post('/api/citas', async (req, res) => {
             return res.status(400).json({ success: false, message: 'Faltan campos requeridos' });
         }
 
-        // Validar horario de atención (8am a 6pm)
-        const fechaCita = new Date(fecha_cita);
-        const hora = fechaCita.getHours();
+        // Validar horario de atención (8am a 8pm)
+        const hora = parseInt(fecha_cita.split(' ')[1].split(':')[0]);
 
-        if (hora < 8 || hora >= 18) {
+        if (hora < 8 || hora >= 20) {
             return res.status(400).json({
                 success: false,
-                message: 'El horario de atención es de 8:00 AM a 6:00 PM. Por favor, seleccione otra hora.'
+                message: 'El horario de atención es de 8:00 AM a 8:00 PM. Por favor, seleccione otra hora.'
             });
         }
 
@@ -451,13 +450,12 @@ app.put('/api/citas/:id', async (req, res) => {
 
         // Validar horario de atención si se está actualizando la fecha
         if (fecha_cita) {
-            const fechaCita = new Date(fecha_cita);
-            const hora = fechaCita.getHours();
+            const hora = parseInt(fecha_cita.split(' ')[1].split(':')[0]);
 
-            if (hora < 8 || hora >= 18) {
+            if (hora < 8 || hora >= 20) {
                 return res.status(400).json({
                     success: false,
-                    message: 'El horario de atención es de 8:00 AM a 6:00 PM. Por favor, seleccione otra hora.'
+                    message: 'El horario de atención es de 8:00 AM a 8:00 PM. Por favor, seleccione otra hora.'
                 });
             }
         }

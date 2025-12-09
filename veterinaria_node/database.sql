@@ -77,7 +77,7 @@ CREATE TABLE citas (
     fecha_cita DATETIME NOT NULL,
     motivo VARCHAR(200) NOT NULL,
     tipo ENUM('consulta', 'vacunacion', 'cirugia', 'control', 'emergencia') NOT NULL,
-    estado ENUM('reserva', 'atendida', 'cancelada') DEFAULT 'reserva',
+    estado ENUM('reserva', 'citada', 'atendida', 'cancelada') DEFAULT 'reserva',
     observaciones TEXT,
     costo DECIMAL(10,2),
     fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

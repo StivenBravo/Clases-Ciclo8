@@ -80,7 +80,7 @@ app.get('/api/productos/stock/bajo', async (req, res) => {
 // POST - Registrar nuevo producto
 app.post('/api/productos', async (req, res) => {
     try {
-        const { codigo, nombre, descripcion, categoria, marca, precio_compra, precio_venta, stock, stock_minimo } = req.body;
+        const { codigo, nombre, descripcion, categoria, marca, precio_compra, precio_venta, stock, stock_minimo, imagen_url } = req.body;
 
         // Validar campos requeridos
         if (!codigo || !nombre || !categoria || !precio_compra || !precio_venta) {
@@ -96,8 +96,8 @@ app.post('/api/productos', async (req, res) => {
         const estado = stock > 0 ? 'disponible' : 'agotado';
 
         const [result] = await pool.query(
-            'INSERT INTO productos (codigo, nombre, descripcion, categoria, marca, precio_compra, precio_venta, stock, stock_minimo, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [codigo, nombre, descripcion, categoria, marca, precio_compra, precio_venta, stock || 0, stock_minimo || 5, estado]
+            'INSERT INTO productos (codigo, nombre, descripcion, categoria, marca, precio_compra, precio_venta, stock, stock_minimo, estado, imagen_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [codigo, nombre, descripcion, categoria, marca, precio_compra, precio_venta, stock || 0, stock_minimo || 5, estado, imagen_url || null]
         );
 
         res.status(201).json({
@@ -113,15 +113,34 @@ app.post('/api/productos', async (req, res) => {
 // PUT - Actualizar producto
 app.put('/api/productos/:id', async (req, res) => {
     try {
-        const { nombre, descripcion, categoria, marca, precio_compra, precio_venta, stock, stock_minimo, estado } = req.body;
+        const { nombre, descripcion, categoria, marca, precio_compra, precio_venta, stock, stock_minimo, estado, imagen_url } = req.body;
 
+        // Obtener stock anterior para comparar
+        const [productoAnterior] = await pool.query('SELECT stock, nombre, precio_venta FROM productos WHERE id = ?', [req.params.id]);
+
+        if (productoAnterior.length === 0) {
+            return res.status(404).json({ success: false, message: 'Producto no encontrado' });
+        }
+
+        const stockAnterior = productoAnterior[0].stock;
+        const stockNuevo = parseInt(stock);
+
+        // Actualizar producto
         const [result] = await pool.query(
-            'UPDATE productos SET nombre = ?, descripcion = ?, categoria = ?, marca = ?, precio_compra = ?, precio_venta = ?, stock = ?, stock_minimo = ?, estado = ? WHERE id = ?',
-            [nombre, descripcion, categoria, marca, precio_compra, precio_venta, stock, stock_minimo, estado, req.params.id]
+            'UPDATE productos SET nombre = ?, descripcion = ?, categoria = ?, marca = ?, precio_compra = ?, precio_venta = ?, stock = ?, stock_minimo = ?, estado = ?, imagen_url = ? WHERE id = ?',
+            [nombre, descripcion, categoria, marca, precio_compra, precio_venta, stockNuevo, stock_minimo, estado, imagen_url || null, req.params.id]
         );
 
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ success: false, message: 'Producto no encontrado' });
+        // Si el stock cambió, registrar en historial
+        if (stockAnterior !== stockNuevo) {
+            const diferencia = stockNuevo - stockAnterior;
+            const tipo = diferencia > 0 ? 'entrada' : 'salida';
+            const motivo = diferencia < 0 ? 'Venta desde panel admin' : 'Ajuste de inventario';
+
+            await pool.query(
+                'INSERT INTO historial_stock (producto_id, cantidad_anterior, cantidad_nueva, diferencia, tipo, motivo) VALUES (?, ?, ?, ?, ?, ?)',
+                [req.params.id, stockAnterior, stockNuevo, Math.abs(diferencia), tipo, motivo]
+            );
         }
 
         res.json({ success: true, message: 'Producto actualizado exitosamente' });
@@ -212,6 +231,35 @@ app.get('/api/productos/stats/general', async (req, res) => {
                 resumen: total[0],
                 por_categoria: categorias
             }
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// GET - Historial de ventas (salidas de stock)
+app.get('/api/productos/ventas', async (req, res) => {
+    try {
+        const [ventas] = await pool.query(`
+            SELECT 
+                h.id,
+                h.producto_id,
+                p.nombre as producto_nombre,
+                p.categoria,
+                p.precio_venta,
+                h.diferencia as cantidad,
+                (h.diferencia * p.precio_venta) as total,
+                h.motivo,
+                h.fecha_movimiento
+            FROM historial_stock h
+            INNER JOIN productos p ON h.producto_id = p.id
+            WHERE h.tipo = 'salida'
+            ORDER BY h.fecha_movimiento DESC
+        `);
+
+        res.json({
+            success: true,
+            data: ventas
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

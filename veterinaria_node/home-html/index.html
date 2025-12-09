@@ -20,6 +20,19 @@
   <link href="css/style.css" rel="stylesheet" />
   <!-- responsive style -->
   <link href="css/responsive.css" rel="stylesheet" />
+  <style>
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.7;
+      }
+    }
+  </style>
 </head>
 
 <body>
@@ -43,19 +56,23 @@
             <div class="d-flex mx-auto flex-column flex-lg-row align-items-center">
               <ul class="navbar-nav  ">
                 <li class="nav-item active">
-                  <a class="nav-link" href="index.html">Inicio<span class="sr-only">(current)</span></a>
+                  <a class="nav-link" href="#inicio">Inicio<span class="sr-only">(current)</span></a>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link" href="service.html">Reserva tu cita</a>
+                  <a class="nav-link" href="#reserva-cita">Reserva tu cita</a>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link" href="pet.html">¿ Tienes una emergencia ?</a>
+                  <a class="nav-link"
+                    href="https://wa.me/51925012871?text=%C2%A1Tengo%20una%20emergencia!%20%C2%BFPuedo%20contactarme%20con%20ustedes%3F"
+                    target="_blank">¿ Tienes una emergencia ?</a>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link" href="clinic.html">Ubicación</a>
+                  <a class="nav-link" href="#ubicacion">Ubicación</a>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link" href="contact.html">Contacto</a>
+                  <a class="nav-link"
+                    href="https://wa.me/51925012871?text=%C2%A1Hola%20Veterinaria%20Mascotas!%20Tengo%20una%20consulta!"
+                    target="_blank">Contacto</a>
                 </li>
                 <li class="nav-item">
                   <a class="nav-link" href="buy.html"> Comprar ahora </a>
@@ -75,7 +92,7 @@
     <!-- end header section -->
 
     <!-- slider section -->
-    <section class=" slider_section position-relative">
+    <section id="inicio" class=" slider_section position-relative">
       <div id="carouselExampleIndicators" class="carousel slide" data-ride="carousel">
         <ol class="carousel-indicators">
         </ol>
@@ -95,7 +112,7 @@
                       Contamos con médicos especializados en el cuidado de tus engreidos.
                     </p>
                     <div class="btn-box">
-                      <a href="" class="btn-1">
+                      <a href="buy.html" class="btn-1">
                         Comprar ahora
                       </a>
                       <a href="#reserva-cita" class="btn-2">
@@ -112,6 +129,32 @@
     <!-- end slider section -->
   </div>
 
+  <!-- productos destacados section -->
+  <section class="layout_padding" style="background-color: #f8f9fa;">
+    <div class="container">
+      <div class="heading_container text-center" style="margin-bottom: 50px;">
+        <h2 style="color: #023b48; font-weight: 600; font-size: 36px;">
+          Nuestros <span style="color: #0dc3ff;">Productos</span>
+        </h2>
+        <p style="color: #666; font-size: 16px; margin-top: 10px;">
+          Los mejores productos para el cuidado de tu mascota
+        </p>
+      </div>
+
+      <div id="productosDestacados"
+        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 30px; margin-bottom: 30px;">
+        <p class="text-center" style="grid-column: 1/-1;">Cargando productos...</p>
+      </div>
+
+      <div class="text-center">
+        <a href="buy.html" class="btn"
+          style="background: #0dc3ff; color: white; padding: 12px 40px; border-radius: 25px; text-decoration: none; font-weight: 600; display: inline-block; transition: all 0.3s;">
+          Ver todos los productos →
+        </a>
+      </div>
+    </div>
+  </section>
+
   <!-- appointment section -->
   <section id="reserva-cita" class="appointment_section layout_padding">
     <div class="container">
@@ -126,6 +169,20 @@
       <div id="alertLogin" class="alert alert-warning text-center" style="display: none;">
         <i class="fa fa-exclamation-triangle"></i>
         Debes <a href="/login" class="alert-link">iniciar sesión</a> para poder reservar una cita.
+      </div>
+
+      <!-- Notificación de citas aprobadas -->
+      <div id="citasAprobadas" class="alert alert-success" style="display: none; margin-bottom: 20px;">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <i class="fa fa-check-circle fa-lg"></i>
+            <strong class="ml-2">¡Tienes citas confirmadas!</strong>
+          </div>
+          <button class="btn btn-sm btn-success" id="btnVerCitas">
+            <i class="fa fa-calendar-check"></i> Ver mis citas
+          </button>
+        </div>
+        <div id="listaCitasAprobadas" class="mt-3" style="display: none;"></div>
       </div>
 
       <div class="appointment_container" id="appointmentContainer">
@@ -219,7 +276,7 @@
   <!-- end appointment section -->
 
   <!-- contact and map section -->
-  <section class="contact_map_section">
+  <section id="ubicacion" class="contact_map_section">
     <div class="container py-5">
       <div class="container">
         <div class="row no-gutters">
@@ -283,6 +340,72 @@
   <script type="text/javascript" src="js/bootstrap.js"></script>
   <script type="text/javascript" src="js/auth-navbar.js"></script>
   <script type="text/javascript" src="js/appointments.js"></script>
+
+  <script>
+    // Cargar productos destacados
+    async function cargarProductosDestacados() {
+      try {
+        const response = await fetch('/api/productos');
+        const data = await response.json();
+
+        if (data.success) {
+          // Filtrar productos disponibles y tomar los primeros 4
+          const productosDisponibles = data.data
+            .filter(p => p.estado === 'disponible')
+            .slice(0, 4);
+
+          const container = document.getElementById('productosDestacados');
+
+          if (productosDisponibles.length === 0) {
+            container.innerHTML = '<p class="text-center" style="grid-column: 1/-1;">No hay productos disponibles</p>';
+            return;
+          }
+
+          container.innerHTML = productosDisponibles.map(producto => {
+            let stockBadge = '';
+            if (producto.stock === 0) {
+              stockBadge = '<div style="position: absolute; top: 10px; right: 10px; background: #868e96; color: white; padding: 5px 10px; border-radius: 15px; font-size: 11px; font-weight: 600;"><i class="fa fa-times-circle"></i> No disponible</div>';
+            } else if (producto.stock < 3) {
+              stockBadge = '<div style="position: absolute; top: 10px; right: 10px; background: #ff6b6b; color: white; padding: 5px 10px; border-radius: 15px; font-size: 11px; font-weight: 600; animation: pulse 2s infinite;"><i class="fa fa-exclamation-triangle"></i> ¡Poco stock!</div>';
+            }
+
+            return `
+              <div style="background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); transition: transform 0.3s; cursor: pointer; position: relative;" 
+                   onmouseover="this.style.transform='translateY(-10px)'" 
+                   onmouseout="this.style.transform='translateY(0)'"
+                   onclick="window.location.href='buy.html'">
+                ${stockBadge}
+                <img src="${producto.imagen_url || 'https://via.placeholder.com/250x200?text=Sin+Imagen'}" 
+                     alt="${producto.nombre}" 
+                     style="width: 100%; height: 200px; object-fit: cover;"
+                     onerror="this.src='https://via.placeholder.com/250x200?text=Sin+Imagen'">
+                <div style="padding: 20px;">
+                  <div style="display: inline-block; padding: 4px 12px; background: #0dc3ff; color: white; border-radius: 20px; font-size: 11px; font-weight: 500; margin-bottom: 10px; text-transform: uppercase;">
+                    ${producto.categoria}
+                  </div>
+                  <h4 style="font-size: 16px; font-weight: 600; color: #023b48; margin-bottom: 8px; min-height: 40px;">
+                    ${producto.nombre}
+                  </h4>
+                  <p style="font-size: 13px; color: #666; margin-bottom: 10px;">
+                    <i class="fa fa-tag"></i> ${producto.marca || 'Sin marca'}
+                  </p>
+                  <div style="font-size: 22px; font-weight: 700; color: #0dc3ff;">
+                    S/ ${parseFloat(producto.precio_venta).toFixed(2)}
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
+      } catch (error) {
+        console.error('Error al cargar productos:', error);
+        document.getElementById('productosDestacados').innerHTML = '<p class="text-center" style="grid-column: 1/-1; color: #ff6b6b;">Error al cargar productos</p>';
+      }
+    }
+
+    // Cargar productos al cargar la página
+    document.addEventListener('DOMContentLoaded', cargarProductosDestacados);
+  </script>
 </body>
 
 </html>

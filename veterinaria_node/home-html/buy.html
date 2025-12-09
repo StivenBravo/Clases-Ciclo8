@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Productos - Mascotas</title>
+    <!-- bootstrap core css -->
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.css" />
+    <!-- font awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <!-- fonts style -->
+    <link href="https://fonts.googleapis.com/css?family=Dosis:400,500|Poppins:400,700&display=swap" rel="stylesheet">
+    <!-- Custom styles -->
+    <link href="css/style.css" rel="stylesheet" />
+    <link href="css/responsive.css" rel="stylesheet" />
+    <style>
+        .productos_section {
+            padding: 60px 0;
+            background-color: #f8f9fa;
+        }
+
+        .heading_container {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .heading_container h2 {
+            font-size: 36px;
+            font-weight: 600;
+            color: #023b48;
+        }
+
+        .heading_container span {
+            color: #0dc3ff;
+        }
+
+        .filter-section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .filter-section select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+
+        .productos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .producto-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .producto-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .producto-imagen {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            background: #f0f0f0;
+        }
+
+        .producto-info {
+            padding: 20px;
+        }
+
+        .producto-categoria {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #0dc3ff;
+            color: white;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .producto-nombre {
+            font-size: 18px;
+            font-weight: 600;
+            color: #023b48;
+            margin-bottom: 10px;
+            min-height: 50px;
+        }
+
+        .producto-marca {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .producto-precio {
+            font-size: 24px;
+            font-weight: 700;
+            color: #0dc3ff;
+            margin: 15px 0;
+        }
+
+        .stock-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            z-index: 1;
+        }
+
+        .stock-bajo {
+            background: #ff6b6b;
+            color: white;
+            animation: pulse 2s infinite;
+        }
+
+        .stock-disponible {
+            background: #51cf66;
+            color: white;
+        }
+
+        .stock-agotado {
+            background: #868e96;
+            color: white;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            max-width: 900px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 24px;
+            line-height: 1;
+            z-index: 1;
+        }
+
+        .modal-close:hover {
+            background: #ff5252;
+        }
+
+        .modal-body {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 40px;
+        }
+
+        .modal-imagen {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+
+        .modal-info h2 {
+            font-size: 28px;
+            color: #023b48;
+            margin-bottom: 15px;
+        }
+
+        .modal-info .marca {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .modal-info .descripcion {
+            color: #444;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .modal-info .precio {
+            font-size: 32px;
+            font-weight: 700;
+            color: #0dc3ff;
+            margin: 20px 0;
+        }
+
+        .modal-info .stock-info {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .modal-body {
+                grid-template-columns: 1fr;
+            }
+
+            .productos-grid {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                gap: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- header section -->
+    <header class="header_section">
+        <div class="container-fluid">
+            <nav class="navbar navbar-expand-lg custom_nav-container">
+                <a class="navbar-brand" href="index.html">
+                    <img src="/img/logo.png" alt="">
+                    <span>Mascotas</span>
+                </a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse"
+                    data-target="#navbarSupportedContent">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <div class="d-flex mx-auto flex-column flex-lg-row align-items-center">
+                        <ul class="navbar-nav">
+                            <li class="nav-item">
+                                <a class="nav-link" href="index.html#inicio">Inicio</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="index.html#reserva-cita">Reserva tu cita</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link"
+                                    href="https://wa.me/51925012871?text=%C2%A1Tengo%20una%20emergencia!%20%C2%BFPuedo%20contactarme%20con%20ustedes%3F"
+                                    target="_blank">¿Tienes una emergencia?</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="index.html#ubicacion">Ubicación</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link"
+                                    href="https://wa.me/51925012871?text=%C2%A1Hola%20Veterinaria%20Mascotas!%20Tengo%20una%20consulta!"
+                                    target="_blank">Contacto</a>
+                            </li>
+                            <li class="nav-item active">
+                                <a class="nav-link" href="buy.html">Comprar ahora<span
+                                        class="sr-only">(current)</span></a>
+                            </li>
+                            <li class="nav-item" id="authMenuItem">
+                                <a class="nav-link" href="/login" id="authLink">Inicia Sesión</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- productos section -->
+    <section class="productos_section layout_padding">
+        <div class="container">
+            <div class="heading_container">
+                <h2>Nuestros <span>Productos</span></h2>
+                <p>Los mejores productos para el cuidado de tu mascota</p>
+            </div>
+
+            <!-- Filtros -->
+            <div class="filter-section">
+                <div class="row align-items-center">
+                    <div class="col-md-4">
+                        <select id="filtroCategoria" class="form-control">
+                            <option value="">Todas las categorías</option>
+                            <option value="alimento">Alimentos</option>
+                            <option value="medicamento">Medicamentos</option>
+                            <option value="accesorio">Accesorios</option>
+                            <option value="higiene">Higiene</option>
+                            <option value="juguete">Juguetes</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <input type="text" id="buscarProducto" class="form-control" placeholder="Buscar producto...">
+                    </div>
+                    <div class="col-md-4">
+                        <select id="ordenar" class="form-control">
+                            <option value="nombre">Ordenar por nombre</option>
+                            <option value="precio_asc">Precio: menor a mayor</option>
+                            <option value="precio_desc">Precio: mayor a menor</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grid de productos -->
+            <div id="productosGrid" class="productos-grid">
+                <p class="text-center">Cargando productos...</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Modal de detalle -->
+    <div class="modal-overlay" id="modalProducto">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <button class="modal-close" onclick="cerrarModal()">&times;</button>
+            <div class="modal-body" id="modalBody">
+                <!-- Contenido dinámico -->
+            </div>
+        </div>
+    </div>
+
+    <!-- footer section -->
+    <footer class="container-fluid footer_section">
+        <p>
+            &copy; 2025 derechos reservados
+        </p>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="js/jquery-3.4.1.min.js"></script>
+    <script src="js/bootstrap.js"></script>
+    <script>
+        let productos = [];
+        let productosFiltrados = [];
+
+        // Cargar productos al inicio
+        document.addEventListener('DOMContentLoaded', function () {
+            cargarProductos();
+            setupEventListeners();
+        });
+
+        async function cargarProductos() {
+            try {
+                const response = await fetch('/api/productos');
+                const data = await response.json();
+
+                if (data.success) {
+                    productos = data.data.filter(p => p.estado === 'disponible');
+                    productosFiltrados = [...productos];
+                    renderProductos();
+                }
+            } catch (error) {
+                console.error('Error al cargar productos:', error);
+                document.getElementById('productosGrid').innerHTML = '<p class="text-center text-danger">Error al cargar productos</p>';
+            }
+        }
+
+        function setupEventListeners() {
+            document.getElementById('filtroCategoria').addEventListener('change', aplicarFiltros);
+            document.getElementById('buscarProducto').addEventListener('input', aplicarFiltros);
+            document.getElementById('ordenar').addEventListener('change', aplicarFiltros);
+
+            // Cerrar modal al hacer clic fuera
+            document.getElementById('modalProducto').addEventListener('click', cerrarModal);
+        }
+
+        function aplicarFiltros() {
+            const categoria = document.getElementById('filtroCategoria').value;
+            const busqueda = document.getElementById('buscarProducto').value.toLowerCase();
+            const orden = document.getElementById('ordenar').value;
+
+            // Filtrar
+            productosFiltrados = productos.filter(p => {
+                const matchCategoria = !categoria || p.categoria === categoria;
+                const matchBusqueda = !busqueda ||
+                    p.nombre.toLowerCase().includes(busqueda) ||
+                    p.marca.toLowerCase().includes(busqueda);
+                return matchCategoria && matchBusqueda;
+            });
+
+            // Ordenar
+            if (orden === 'precio_asc') {
+                productosFiltrados.sort((a, b) => a.precio_venta - b.precio_venta);
+            } else if (orden === 'precio_desc') {
+                productosFiltrados.sort((a, b) => b.precio_venta - a.precio_venta);
+            } else {
+                productosFiltrados.sort((a, b) => a.nombre.localeCompare(b.nombre));
+            }
+
+            renderProductos();
+        }
+
+        function renderProductos() {
+            const grid = document.getElementById('productosGrid');
+
+            if (productosFiltrados.length === 0) {
+                grid.innerHTML = '<p class="text-center">No se encontraron productos</p>';
+                return;
+            }
+
+            grid.innerHTML = productosFiltrados.map(producto => {
+                let stockBadge;
+                if (producto.stock === 0) {
+                    stockBadge = '<div class="stock-badge stock-agotado"><i class="fa fa-times-circle"></i> No disponible</div>';
+                } else if (producto.stock < 3) {
+                    stockBadge = '<div class="stock-badge stock-bajo"><i class="fa fa-exclamation-triangle"></i> ¡Poco stock!</div>';
+                } else {
+                    stockBadge = '<div class="stock-badge stock-disponible"><i class="fa fa-check"></i> Disponible</div>';
+                }
+
+                return `
+                    <div class="producto-card" onclick="mostrarDetalle(${producto.id})">
+                        ${stockBadge}
+                        <img src="${producto.imagen_url || 'https://via.placeholder.com/280x220?text=Sin+Imagen'}" 
+                             alt="${producto.nombre}" 
+                             class="producto-imagen"
+                             onerror="this.src='https://via.placeholder.com/280x220?text=Sin+Imagen'">
+                        <div class="producto-info">
+                            <div class="producto-categoria">${producto.categoria}</div>
+                            <h3 class="producto-nombre">${producto.nombre}</h3>
+                            <p class="producto-marca"><i class="fa fa-tag"></i> ${producto.marca || 'Sin marca'}</p>
+                            <div class="producto-precio">S/ ${parseFloat(producto.precio_venta).toFixed(2)}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function mostrarDetalle(id) {
+            const producto = productos.find(p => p.id === id);
+            if (!producto) return;
+
+            let stockHTML;
+            if (producto.stock === 0) {
+                stockHTML = `<div style="color: #868e96; font-weight: 600; padding: 10px; background: #f1f3f5; border-radius: 5px;">
+                               <i class="fa fa-times-circle"></i> Producto no disponible
+                           </div>`;
+            } else if (producto.stock < 3) {
+                stockHTML = `<div style="color: #ff6b6b; font-weight: 600; padding: 10px; background: #ffe5e5; border-radius: 5px;">
+                               <i class="fa fa-exclamation-triangle"></i> ¡Queda poco stock! (${producto.stock} unidades)
+                           </div>`;
+            } else {
+                stockHTML = `<div style="color: #51cf66; font-weight: 600; padding: 10px; background: #e6ffe6; border-radius: 5px;">
+                               <i class="fa fa-check-circle"></i> Disponible (${producto.stock} unidades)
+                           </div>`;
+            }
+
+            document.getElementById('modalBody').innerHTML = `
+                <div>
+                    <img src="${producto.imagen_url || 'https://via.placeholder.com/400x400?text=Sin+Imagen'}" 
+                         alt="${producto.nombre}" 
+                         class="modal-imagen"
+                         onerror="this.src='https://via.placeholder.com/400x400?text=Sin+Imagen'">
+                </div>
+                <div class="modal-info">
+                    <div class="producto-categoria">${producto.categoria}</div>
+                    <h2>${producto.nombre}</h2>
+                    <p class="marca"><i class="fa fa-tag"></i> ${producto.marca || 'Sin marca'}</p>
+                    <p class="descripcion">${producto.descripcion || 'Sin descripción disponible'}</p>
+                    <div class="precio">S/ ${parseFloat(producto.precio_venta).toFixed(2)}</div>
+                    <div class="stock-info">
+                        ${stockHTML}
+                    </div>
+                    <p style="color: #666; font-size: 14px;">
+                        <i class="fa fa-info-circle"></i> Para realizar tu compra, contáctanos o visítanos en nuestra clínica.
+                    </p>
+                </div>
+            `;
+
+            document.getElementById('modalProducto').classList.add('active');
+        }
+
+        function cerrarModal() {
+            document.getElementById('modalProducto').classList.remove('active');
+        }
+    </script>
+</body>
+
+</html>

@@ -12,6 +12,7 @@
         setCurrentWeek();
         loadDisponibilidad();
         setupEventListeners();
+        checkCitasAprobadas();
     });
 
     // Verificar sesión del usuario
@@ -38,6 +39,97 @@
             if (nombreInput) {
                 nombreInput.value = userSession.nombre_completo || '';
             }
+        }
+    }
+
+    // Verificar citas aprobadas del usuario
+    async function checkCitasAprobadas() {
+        if (!userSession || userSession.rol !== 'cliente') return;
+
+        try {
+            // Obtener mascotas del cliente
+            const responseMascotas = await fetch(`/api/mascotas/cliente/${userSession.id}`);
+            if (!responseMascotas.ok) return;
+
+            const resultMascotas = await responseMascotas.json();
+            if (!resultMascotas.success || !resultMascotas.data.length) return;
+
+            // Obtener citas de todas las mascotas
+            let citasAprobadas = [];
+            for (const mascota of resultMascotas.data) {
+                const responseCitas = await fetch(`/api/citas/mascota/${mascota.id}`);
+                if (responseCitas.ok) {
+                    const resultCitas = await responseCitas.json();
+                    if (resultCitas.success) {
+                        // Filtrar solo citas citadas (aprobadas) futuras
+                        const citasFuturas = resultCitas.data.filter(cita => {
+                            const fechaCita = new Date(cita.fecha_cita);
+                            return cita.estado === 'citada' && fechaCita > new Date();
+                        });
+                        citasAprobadas.push(...citasFuturas.map(c => ({ ...c, mascota_nombre: mascota.nombre })));
+                    }
+                }
+            }
+
+            // Mostrar notificación si hay citas aprobadas
+            if (citasAprobadas.length > 0) {
+                mostrarNotificacionCitas(citasAprobadas);
+            }
+        } catch (error) {
+            console.error('Error al verificar citas aprobadas:', error);
+        }
+    }
+
+    // Mostrar notificación de citas aprobadas
+    function mostrarNotificacionCitas(citas) {
+        const alertDiv = document.getElementById('citasAprobadas');
+        const listaDiv = document.getElementById('listaCitasAprobadas');
+
+        if (!alertDiv || !listaDiv) return;
+
+        // Generar lista de citas
+        let html = '<div class="list-group">';
+        citas.forEach(cita => {
+            const fecha = new Date(cita.fecha_cita);
+            const fechaStr = fecha.toLocaleDateString('es-PE', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            const horaStr = fecha.toLocaleTimeString('es-PE', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            html += `
+                <div class="list-group-item list-group-item-action">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1"><i class="fa fa-paw"></i> ${cita.mascota_nombre}</h6>
+                        <small><i class="fa fa-clock"></i> ${horaStr}</small>
+                    </div>
+                    <p class="mb-1"><i class="fa fa-calendar"></i> ${fechaStr}</p>
+                    <small><i class="fa fa-user-md"></i> Dr. ${cita.vet_nombres} ${cita.vet_apellidos}</small>
+                </div>
+            `;
+        });
+        html += '</div>';
+
+        listaDiv.innerHTML = html;
+        alertDiv.style.display = 'block';
+
+        // Agregar evento al botón
+        const btnVerCitas = document.getElementById('btnVerCitas');
+        if (btnVerCitas) {
+            btnVerCitas.onclick = function () {
+                if (listaDiv.style.display === 'none') {
+                    listaDiv.style.display = 'block';
+                    btnVerCitas.innerHTML = '<i class="fa fa-eye-slash"></i> Ocultar citas';
+                } else {
+                    listaDiv.style.display = 'none';
+                    btnVerCitas.innerHTML = '<i class="fa fa-calendar-check"></i> Ver mis citas';
+                }
+            };
         }
     }
 
@@ -169,7 +261,13 @@
                     timeSlot.textContent = timeStr;
                 }
 
-                timeSlot.dataset.datetime = slotTime.toISOString();
+                // Guardar datetime en formato local (no UTC)
+                const year = slotTime.getFullYear();
+                const month = String(slotTime.getMonth() + 1).padStart(2, '0');
+                const day = String(slotTime.getDate()).padStart(2, '0');
+                const hourStr = String(hour).padStart(2, '0');
+                const localDatetime = `${year}-${month}-${day}T${hourStr}:00`;
+                timeSlot.dataset.datetime = localDatetime;
 
                 // Verificar si está ocupado o no hay doctores
                 const isOccupied = isSlotOccupied(slotTime);
@@ -185,7 +283,7 @@
                 } else {
                     timeSlot.classList.add('available');
                     timeSlot.title = `${cantidadDoctores} doctor(es) disponible(s)`;
-                    timeSlot.addEventListener('click', () => selectTimeSlot(timeSlot, slotTime, doctoresDisponibles));
+                    timeSlot.addEventListener('click', () => selectTimeSlot(timeSlot, localDatetime, doctoresDisponibles));
                 }
 
                 timeSlots.appendChild(timeSlot);
@@ -229,20 +327,24 @@
     }
 
     // Verificar si un horario está ocupado
-    function isSlotOccupied(datetime) {
-        const veterinarioId = document.getElementById('veterinario').value;
-        if (!veterinarioId) return false;
+    function isSlotOccupied(datetimeLocal) {
+        // Verificar si hay alguna cita citada o atendida en este horario
+        // Convertir datetime local string a formato comparable
+        const slotTime = new Date(datetimeLocal);
 
         return disponibilidad.citas.some(cita => {
             const citaDate = new Date(cita.fecha_cita);
-            return citaDate.getTime() === datetime.getTime() &&
-                cita.veterinario_id == veterinarioId &&
-                ['reserva', 'atendida'].includes(cita.estado);
+            // Comparar fecha y hora ignorando minutos y segundos
+            return citaDate.getFullYear() === slotTime.getFullYear() &&
+                citaDate.getMonth() === slotTime.getMonth() &&
+                citaDate.getDate() === slotTime.getDate() &&
+                citaDate.getHours() === slotTime.getHours() &&
+                (cita.estado === 'citada' || cita.estado === 'atendida');
         });
     }
 
     // Seleccionar horario
-    function selectTimeSlot(element, datetime, doctoresDisponibles) {
+    function selectTimeSlot(element, datetimeStr, doctoresDisponibles) {
         // Verificar si el usuario está logueado
         if (!userSession || userSession.rol !== 'cliente') {
             if (confirm('⚠️ Debes iniciar sesión como cliente para reservar una cita.\n\n¿Deseas ir al login ahora?')) {
@@ -263,12 +365,11 @@
         // Agregar nueva selección
         element.classList.remove('available');
         element.classList.add('selected');
-        selectedSlot = datetime;
+        selectedSlot = datetimeStr; // Guardar el string directamente
 
         // Actualizar campo de fecha
         const dateInput = document.getElementById('fechaCita');
-        const localDatetime = new Date(datetime.getTime() - (datetime.getTimezoneOffset() * 60000));
-        dateInput.value = localDatetime.toISOString().slice(0, 16);
+        dateInput.value = datetimeStr;
     }
 
     // Actualizar select de veterinarios con los disponibles
@@ -362,12 +463,15 @@
         btnReservar.disabled = true;
         btnReservar.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Reservando...';
 
+        // Convertir formato datetime-local (YYYY-MM-DDTHH:MM) a formato MySQL (YYYY-MM-DD HH:MM:SS)
+        const fechaCitaMySQL = selectedSlot.replace('T', ' ') + ':00';
+
         const formData = {
             dni: userSession.username, // El username es el DNI
             nombre_mascota: document.getElementById('nombreMascota').value,
             especie: document.getElementById('especie').value,
             veterinario_id: document.getElementById('veterinario').value,
-            fecha_cita: selectedSlot.toISOString(),
+            fecha_cita: fechaCitaMySQL,
             tipo: document.getElementById('tipoCita').value,
             motivo: document.getElementById('motivo').value
         };

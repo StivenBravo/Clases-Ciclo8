@@ -9,7 +9,6 @@ let citas = [];
 let productos = [];
 let trabajadores = [];
 let veterinarios = [];
-let tratamientos = [];
 let currentUser = null;
 
 // Verificar sesión al cargar
@@ -103,7 +102,7 @@ function showSection(sectionName) {
             'citas': 'Gestión de Citas',
             'productos': 'Gestión de Productos',
             'trabajadores': 'Gestión de Trabajadores',
-            'tratamientos': 'Gestión de Tratamientos'
+            'reportes': 'Reportes y Estadísticas'
         };
         document.getElementById('pageTitle').textContent = titles[sectionName];
 
@@ -133,8 +132,10 @@ async function loadSectionData(section) {
         case 'trabajadores':
             loadTrabajadores();
             break;
-        case 'tratamientos':
-            loadTratamientos();
+        case 'reportes':
+            // Se carga al hacer clic en botones de periodo
+            document.getElementById('tablaCitasReporte').innerHTML = '<p class="loading">Seleccione un periodo para ver el reporte</p>';
+            document.getElementById('tablaProductosReporte').innerHTML = '<p class="loading">Seleccione un periodo para ver el reporte</p>';
             break;
     }
 }
@@ -491,7 +492,7 @@ function renderAdminCalendar() {
             const citasEnHorario = adminDisponibilidad.citas.filter(cita => {
                 const citaDate = new Date(cita.fecha_cita);
                 return citaDate.getTime() === slotTime.getTime() &&
-                    ['reserva', 'atendida'].includes(cita.estado);
+                    ['reserva', 'citada', 'atendida'].includes(cita.estado);
             });
 
             if (isPast) {
@@ -634,6 +635,7 @@ function mostrarProductos(productosArray) {
         <table>
             <thead>
                 <tr>
+                    <th>Imagen</th>
                     <th>Código</th>
                     <th>Nombre</th>
                     <th>Categoría</th>
@@ -645,25 +647,52 @@ function mostrarProductos(productosArray) {
                 </tr>
             </thead>
             <tbody>
-                ${productosArray.map(producto => `
+                ${productosArray.map(producto => {
+        let stockClass = '';
+        let stockWarning = '';
+
+        if (producto.stock === 0) {
+            stockClass = 'badge badge-secondary';
+            stockWarning = '<br><small style="color: #868e96;"><i class="fas fa-times-circle"></i> No disponible</small>';
+        } else if (producto.stock < 3) {
+            stockClass = 'badge badge-danger';
+            stockWarning = '<br><small style="color: #ff6b6b;"><i class="fas fa-exclamation-triangle"></i> Poco stock</small>';
+        } else if (producto.stock <= producto.stock_minimo) {
+            stockClass = 'badge badge-warning';
+        }
+
+        return `
                     <tr>
+                        <td>
+                            <img src="${producto.imagen_url || 'https://via.placeholder.com/60x60?text=Sin+Imagen'}" 
+                                 alt="${producto.nombre}" 
+                                 style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;"
+                                 onerror="this.src='https://via.placeholder.com/60x60?text=Sin+Imagen'">
+                        </td>
                         <td><strong>${producto.codigo}</strong></td>
                         <td>${producto.nombre}</td>
                         <td>${formatCategoria(producto.categoria)}</td>
                         <td>${producto.marca || '-'}</td>
-                        <td><span class="${producto.stock <= producto.stock_minimo ? 'badge badge-danger' : ''}">${producto.stock}</span></td>
+                        <td>
+                            <span class="${stockClass}">${producto.stock}</span>
+                            ${stockWarning}
+                        </td>
                         <td>S/ ${parseFloat(producto.precio_venta).toFixed(2)}</td>
                         <td><span class="badge badge-${producto.estado === 'disponible' ? 'success' : 'warning'}">${producto.estado}</span></td>
                         <td>
-                            <button class="btn btn-sm btn-warning" onclick="editarProducto(${producto.id})">
+                            <button class="btn btn-sm btn-info" onclick="verProducto(${producto.id})" title="Ver detalles">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-warning" onclick="editarProducto(${producto.id})" title="Editar">
                                 <i class="fas fa-edit"></i>
                             </button>
-                            <button class="btn btn-sm btn-danger" onclick="eliminarProducto(${producto.id})">
+                            <button class="btn btn-sm btn-danger" onclick="eliminarProducto(${producto.id})" title="Eliminar">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </td>
                     </tr>
-                `).join('')}
+                `;
+    }).join('')}
             </tbody>
         </table>
     `;
@@ -730,60 +759,263 @@ function mostrarTrabajadores(trabajadoresArray) {
     container.innerHTML = html;
 }
 
-// TRATAMIENTOS
-async function loadTratamientos() {
+// REPORTES
+async function generarReporte(periodo) {
     try {
-        const response = await fetch(`${API_URL}/tratamientos`);
-        const data = await response.json();
-        tratamientos = data.data || [];
-        mostrarTratamientos(tratamientos);
+        // Calcular fechas según el periodo
+        const ahora = new Date();
+        let fechaInicio, fechaFin;
+        let periodoTexto;
+
+        switch (periodo) {
+            case 'dia':
+                fechaInicio = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), 0, 0, 0);
+                fechaFin = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), 23, 59, 59);
+                periodoTexto = `(Hoy - ${fechaInicio.toLocaleDateString('es-PE')})`;
+                break;
+            case 'semana':
+                const diaSemana = ahora.getDay();
+                const diffAlLunes = diaSemana === 0 ? 6 : diaSemana - 1;
+                fechaInicio = new Date(ahora);
+                fechaInicio.setDate(ahora.getDate() - diffAlLunes);
+                fechaInicio.setHours(0, 0, 0, 0);
+                fechaFin = new Date(fechaInicio);
+                fechaFin.setDate(fechaInicio.getDate() + 6);
+                fechaFin.setHours(23, 59, 59, 999);
+                periodoTexto = `(Semana del ${fechaInicio.toLocaleDateString('es-PE')} al ${fechaFin.toLocaleDateString('es-PE')})`;
+                break;
+            case 'mes':
+                fechaInicio = new Date(ahora.getFullYear(), ahora.getMonth(), 1, 0, 0, 0);
+                fechaFin = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 0, 23, 59, 59);
+                const nombreMes = fechaInicio.toLocaleDateString('es-PE', { month: 'long', year: 'numeric' });
+                periodoTexto = `(${nombreMes.charAt(0).toUpperCase() + nombreMes.slice(1)})`;
+                break;
+        }
+
+        // Actualizar títulos de periodo
+        document.getElementById('periodo-citas').textContent = periodoTexto;
+        document.getElementById('periodo-productos').textContent = periodoTexto;
+
+        // Cargar reporte de citas
+        await cargarReporteCitas(fechaInicio, fechaFin);
+
+        // Cargar reporte de productos
+        await cargarReporteProductos(fechaInicio, fechaFin);
+
     } catch (error) {
-        console.error('Error al cargar tratamientos:', error);
+        console.error('Error al generar reporte:', error);
+        alert('Error al generar el reporte');
     }
 }
 
-function mostrarTratamientos(tratamientosArray) {
-    const container = document.getElementById('tablaTratamientos');
+async function cargarReporteCitas(fechaInicio, fechaFin) {
+    try {
+        const response = await fetch(`${API_URL}/citas`);
+        const data = await response.json();
+        const todasCitas = data.data || [];
 
-    if (tratamientosArray.length === 0) {
-        container.innerHTML = '<p class="loading">No hay tratamientos registrados</p>';
+        // Filtrar solo citas ATENDIDAS por rango de fechas
+        const citasAtendidas = todasCitas.filter(cita => {
+            const fechaCita = new Date(cita.fecha_cita);
+            return cita.estado === 'atendida' && fechaCita >= fechaInicio && fechaCita <= fechaFin;
+        });
+
+        // Actualizar estadística
+        document.getElementById('total-atendidas').textContent = citasAtendidas.length;
+
+        // Mostrar tabla de citas
+        mostrarTablaCitas(citasAtendidas);
+
+    } catch (error) {
+        console.error('Error al cargar reporte de citas:', error);
+        document.getElementById('tablaCitasReporte').innerHTML = '<p class="loading" style="color: red;">Error al cargar el reporte</p>';
+    }
+}
+
+function mostrarTablaCitas(citasArray) {
+    const container = document.getElementById('tablaCitasReporte');
+
+    if (citasArray.length === 0) {
+        container.innerHTML = '<p class="loading">No hay atenciones completadas en este periodo</p>';
         return;
     }
+
+    // Ordenar por fecha descendente
+    citasArray.sort((a, b) => new Date(b.fecha_cita) - new Date(a.fecha_cita));
 
     const html = `
         <table>
             <thead>
                 <tr>
-                    <th>Tipo</th>
+                    <th>Fecha y Hora</th>
                     <th>Mascota</th>
-                    <th>Tutor</th>
-                    <th>Enfermedad/Vacuna</th>
-                    <th>Veterinario</th>
-                    <th>Próxima Visita</th>
-                    <th>Estado</th>
-                    <th>Acciones</th>
+                    <th>Cliente</th>
+                    <th>Tipo</th>
+                    <th>Motivo</th>
+                    <th>Doctor</th>
                 </tr>
             </thead>
             <tbody>
-                ${tratamientosArray.map(trat => `
-                    <tr>
-                        <td><span class="badge badge-${trat.tipo === 'vacuna' ? 'info' : 'warning'}">${trat.tipo === 'vacuna' ? 'Vacuna' : 'Enfermedad'}</span></td>
-                        <td>${trat.mascota_nombre}</td>
-                        <td>${trat.nombres} ${trat.apellido_paterno}</td>
-                        <td>${trat.tipo === 'vacuna' ? trat.vacuna : trat.enfermedad}</td>
-                        <td>Dr. ${trat.vet_nombres} ${trat.vet_apellidos}</td>
-                        <td>${trat.fecha_proxima_visita ? formatDate(trat.fecha_proxima_visita) : '-'}</td>
-                        <td><span class="badge badge-${trat.estado === 'completado' ? 'success' : 'info'}">${trat.estado === 'completado' ? 'Completado' : 'En Curso'}</span></td>
-                        <td>
-                            <button class="btn btn-sm btn-warning" onclick="editarTratamiento(${trat.id})">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="btn btn-sm btn-danger" onclick="eliminarTratamiento(${trat.id})">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `).join('')}
+                ${citasArray.map(cita => {
+        const fecha = new Date(cita.fecha_cita);
+        const fechaFormato = fecha.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        const horaFormato = fecha.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
+
+        return `
+                        <tr>
+                            <td>${fechaFormato} ${horaFormato}</td>
+                            <td>${cita.mascota_nombre || '-'}</td>
+                            <td>${cita.cliente_nombre || '-'}</td>
+                            <td><span class="badge badge-info">${cita.tipo || 'consulta'}</span></td>
+                            <td>${cita.motivo || '-'}</td>
+                            <td>Dr. ${cita.trabajador_nombre || '-'}</td>
+                        </tr>
+                    `;
+    }).join('')}
+            </tbody>
+        </table>
+    `;
+
+    container.innerHTML = html;
+}
+
+async function cargarReporteProductos(fechaInicio, fechaFin) {
+    try {
+        // Cargar historial de ventas (reducciones de stock)
+        const response = await fetch(`${API_URL}/productos/ventas`);
+        const data = await response.json();
+        const todasVentas = data.data || [];
+
+        // Filtrar ventas por rango de fechas
+        const ventasFiltradas = todasVentas.filter(venta => {
+            const fechaVenta = new Date(venta.fecha_movimiento);
+            return fechaVenta >= fechaInicio && fechaVenta <= fechaFin;
+        });
+
+        // Calcular estadísticas
+        const totalVentas = ventasFiltradas.length;
+        const productosVendidos = ventasFiltradas.reduce((sum, v) => sum + (parseInt(v.cantidad) || 0), 0);
+        const totalIngresos = ventasFiltradas.reduce((sum, v) => sum + (parseFloat(v.total) || 0), 0);
+
+        // Actualizar estadísticas
+        document.getElementById('total-ventas').textContent = totalVentas;
+        document.getElementById('productos-vendidos').textContent = productosVendidos;
+        document.getElementById('total-ingreso-ventas').textContent = `S/ ${totalIngresos.toFixed(2)}`;
+
+        // Mostrar tabla de ventas
+        mostrarTablaVentas(ventasFiltradas);
+
+    } catch (error) {
+        console.error('Error al cargar reporte de ventas:', error);
+        document.getElementById('total-ventas').textContent = '0';
+        document.getElementById('productos-vendidos').textContent = '0';
+        document.getElementById('total-ingreso-ventas').textContent = 'S/ 0.00';
+        document.getElementById('tablaProductosReporte').innerHTML = '<p class="loading" style="color: red;">Error al cargar el reporte</p>';
+    }
+}
+
+function mostrarTablaVentas(ventasArray) {
+    const container = document.getElementById('tablaProductosReporte');
+
+    if (ventasArray.length === 0) {
+        container.innerHTML = '<p class="loading">No hay ventas registradas en este periodo</p>';
+        return;
+    }
+
+    // Ordenar por fecha descendente
+    ventasArray.sort((a, b) => new Date(b.fecha_movimiento) - new Date(a.fecha_movimiento));
+
+    const html = `
+        <table>
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Producto</th>
+                    <th>Categoría</th>
+                    <th>Cantidad</th>
+                    <th>Precio Unit.</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${ventasArray.map(venta => {
+        const fecha = new Date(venta.fecha_movimiento);
+        const fechaFormato = fecha.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        const horaFormato = fecha.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
+
+        const cantidad = parseInt(venta.cantidad) || 0;
+        const precioUnit = parseFloat(venta.precio_venta) || 0;
+        const total = parseFloat(venta.total) || 0;
+
+        return `
+                        <tr>
+                            <td>${fechaFormato} ${horaFormato}</td>
+                            <td>${venta.producto_nombre}</td>
+                            <td><span class="badge badge-info">${venta.categoria}</span></td>
+                            <td><strong>${cantidad}</strong> und.</td>
+                            <td>S/ ${precioUnit.toFixed(2)}</td>
+                            <td><strong>S/ ${total.toFixed(2)}</strong></td>
+                        </tr>
+                    `;
+    }).join('')}
+            </tbody>
+        </table>
+    `;
+
+    container.innerHTML = html;
+}
+
+function mostrarTablaProductos(productosArray) {
+    const container = document.getElementById('tablaProductosReporte');
+
+    if (productosArray.length === 0) {
+        container.innerHTML = '<p class="loading">No hay productos registrados</p>';
+        return;
+    }
+
+    // Ordenar por stock ascendente (productos con problemas primero)
+    productosArray.sort((a, b) => a.stock - b.stock);
+
+    const html = `
+        <table>
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Categoría</th>
+                    <th>Stock</th>
+                    <th>Precio</th>
+                    <th>Valor Total</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${productosArray.map(producto => {
+        const precio = parseFloat(producto.precio) || 0;
+        const stock = parseInt(producto.stock) || 0;
+        const valorTotal = (precio * stock).toFixed(2);
+
+        let estadoBadge = 'success';
+        let estadoTexto = 'Disponible';
+
+        if (stock === 0) {
+            estadoBadge = 'danger';
+            estadoTexto = 'Agotado';
+        } else if (stock < 3) {
+            estadoBadge = 'warning';
+            estadoTexto = 'Stock Bajo';
+        }
+
+        return `
+                        <tr>
+                            <td>${producto.nombre}</td>
+                            <td>${producto.categoria}</td>
+                            <td><strong>${stock}</strong> unidades</td>
+                            <td>S/ ${precio.toFixed(2)}</td>
+                            <td>S/ ${valorTotal}</td>
+                            <td><span class="badge badge-${estadoBadge}">${estadoTexto}</span></td>
+                        </tr>
+                    `;
+    }).join('')}
             </tbody>
         </table>
     `;
@@ -1115,11 +1347,14 @@ async function eliminarCliente(id) {
         const data = await response.json();
 
         if (data.success) {
+            alert('Cliente eliminado exitosamente');
             loadClientes();
         } else {
+            alert('Error al eliminar cliente: ' + (data.message || 'Error desconocido'));
         }
     } catch (error) {
         console.error('Error:', error);
+        alert('Error al eliminar cliente');
     }
 }
 
@@ -1491,8 +1726,8 @@ async function mostrarModalCita(citaId = null) {
                                 value="${cita?.fecha_cita ? cita.fecha_cita.split('T')[0] : ''}" required>
                         </div>
                         <div class="form-group">
-                            <label>Hora * (8:00 AM - 6:00 PM)</label>
-                            <input type="time" id="hora_cita" min="08:00" max="17:59"
+                            <label>Hora * (8:00 AM - 8:00 PM)</label>
+                            <input type="time" id="hora_cita" min="08:00" max="20:00"
                                 value="${cita?.fecha_cita ? new Date(cita.fecha_cita).toTimeString().slice(0, 5) : ''}" required>
                         </div>
                     </div>
@@ -1546,13 +1781,13 @@ async function guardarCita(event) {
     const hora = document.getElementById('hora_cita').value;
     const fechaHora = `${fecha} ${hora}:00`;
 
-    // Validar horario (8:00 AM a 6:00 PM)
+    // Validar horario (8:00 AM a 8:00 PM)
     const [horaStr, minutoStr] = hora.split(':');
     const horaNum = parseInt(horaStr);
     const minutoNum = parseInt(minutoStr);
 
-    if (horaNum < 8 || horaNum >= 18) {
-        alert('⚠️ El horario de atención es de 8:00 AM a 6:00 PM.\nPor favor, selecciona un horario válido.');
+    if (horaNum < 8 || horaNum >= 20) {
+        alert('⚠️ El horario de atención es de 8:00 AM a 8:00 PM.\nPor favor, selecciona un horario válido.');
         return;
     }
 
@@ -1611,7 +1846,8 @@ async function guardarCita(event) {
         if (data.success) {
             alert('Cita guardada correctamente');
             cerrarModal();
-            loadCitas();
+            await loadCitas();
+            await loadAdminDisponibilidad(); // Actualizar calendario
         } else {
             alert('Error al guardar cita: ' + (data.message || 'Error desconocido'));
             console.error('Respuesta del servidor:', data);
@@ -1720,6 +1956,83 @@ function verCita(id) {
     document.getElementById('modalContainer').innerHTML = modalHTML;
 }
 
+function verProducto(id) {
+    const producto = productos.find(p => p.id === id);
+    if (!producto) return;
+
+    let stockHTML;
+    if (producto.stock === 0) {
+        stockHTML = `<div style="color: #868e96; font-weight: 600; padding: 10px; background: #f1f3f5; border-radius: 5px;">
+               <i class="fas fa-times-circle"></i> Producto no disponible
+           </div>`;
+    } else if (producto.stock < 3) {
+        stockHTML = `<div style="color: #ff6b6b; font-weight: 600; padding: 10px; background: #ffe5e5; border-radius: 5px;">
+               <i class="fas fa-exclamation-triangle"></i> ¡Poco stock! (${producto.stock} unidades)
+           </div>`;
+    } else {
+        stockHTML = `<div style="color: #51cf66; font-weight: 600; padding: 10px; background: #e6ffe6; border-radius: 5px;">
+               <i class="fas fa-check-circle"></i> Stock disponible (${producto.stock} unidades)
+           </div>`;
+    }
+
+    const modalHTML = `
+        <div class="modal-overlay" onclick="cerrarModal()">
+            <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 900px;">
+                <div class="modal-header">
+                    <h2>Detalle del Producto</h2>
+                    <button class="modal-close" onclick="cerrarModal()">&times;</button>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; padding: 30px;">
+                    <div>
+                        <img src="${producto.imagen_url || 'https://via.placeholder.com/400x400?text=Sin+Imagen'}" 
+                             alt="${producto.nombre}" 
+                             style="width: 100%; height: 400px; object-fit: cover; border-radius: 10px;"
+                             onerror="this.src='https://via.placeholder.com/400x400?text=Sin+Imagen'">
+                    </div>
+                    <div>
+                        <div class="detail-row">
+                            <strong>Código:</strong> ${producto.codigo}
+                        </div>
+                        <div class="detail-row">
+                            <strong>Nombre:</strong> ${producto.nombre}
+                        </div>
+                        <div class="detail-row">
+                            <strong>Categoría:</strong> ${formatCategoria(producto.categoria)}
+                        </div>
+                        <div class="detail-row">
+                            <strong>Marca:</strong> ${producto.marca || 'No especificada'}
+                        </div>
+                        <div class="detail-row">
+                            <strong>Descripción:</strong><br>
+                            ${producto.descripcion || 'Sin descripción'}
+                        </div>
+                        <div class="detail-row" style="margin-top: 20px;">
+                            ${stockHTML}
+                        </div>
+                        <div class="detail-row" style="margin-top: 20px;">
+                            <strong>Precio de compra:</strong> S/ ${parseFloat(producto.precio_compra).toFixed(2)}
+                        </div>
+                        <div class="detail-row">
+                            <strong>Precio de venta:</strong> 
+                            <span style="font-size: 24px; color: #0dc3ff; font-weight: 700;">
+                                S/ ${parseFloat(producto.precio_venta).toFixed(2)}
+                            </span>
+                        </div>
+                        <div class="detail-row">
+                            <strong>Estado:</strong> 
+                            <span class="badge badge-${producto.estado === 'disponible' ? 'success' : 'warning'}">
+                                ${producto.estado}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.getElementById('modalContainer').innerHTML = modalHTML;
+}
+
 function editarProducto(id) {
     mostrarModalProducto(id);
 }
@@ -1789,6 +2102,14 @@ async function mostrarModalProducto(id = null) {
                         </div>
                     </div>
                     <div class="form-row">
+                        <div class="form-group full-width">
+                            <label>URL de Imagen</label>
+                            <input type="url" id="imagen_url" value="${producto?.imagen_url || ''}" 
+                                placeholder="https://ejemplo.com/imagen.jpg">
+                            <small style="color: #666;">Introduce la URL de la imagen del producto</small>
+                        </div>
+                    </div>
+                    <div class="form-row">
                         <div class="form-group">
                             <label>Marca</label>
                             <input type="text" id="marca" value="${producto?.marca || ''}">
@@ -1850,7 +2171,8 @@ async function guardarProducto(event, id) {
         precio_venta: parseFloat(document.getElementById('precio_venta').value),
         stock: parseInt(document.getElementById('stock').value),
         stock_minimo: parseInt(document.getElementById('stock_minimo').value),
-        estado: document.getElementById('estado').value
+        estado: document.getElementById('estado').value,
+        imagen_url: document.getElementById('imagen_url').value || null
     };
 
     try {
@@ -2028,279 +2350,6 @@ async function guardarTrabajador(event, id) {
     } catch (error) {
         console.error('Error:', error);
         alert('Error al guardar el trabajador');
-    }
-}
-
-function editarTratamiento(id) {
-    mostrarModalTratamiento(id);
-}
-
-async function eliminarTratamiento(id) {
-    if (!confirm('¿Está seguro de eliminar este tratamiento?')) return;
-
-    try {
-        const response = await fetch(`${API_URL}/tratamientos/${id}`, {
-            method: 'DELETE'
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-            loadTratamientos();
-        } else {
-            alert('Error al eliminar el tratamiento');
-        }
-    } catch (error) {
-        console.error('Error al eliminar tratamiento:', error);
-        alert('Error al eliminar el tratamiento');
-    }
-}
-
-async function mostrarModalTratamiento(id = null) {
-    // Cargar clientes, mascotas y trabajadores si no están cargados
-    try {
-        if (clientes.length === 0) {
-            const responseClientes = await fetch(`${API_URL}/clientes`);
-            const dataClientes = await responseClientes.json();
-            clientes = dataClientes.data || [];
-        }
-
-        if (mascotas.length === 0) {
-            const responseMascotas = await fetch(`${API_URL}/mascotas`);
-            const dataMascotas = await responseMascotas.json();
-            mascotas = dataMascotas.data || [];
-        }
-
-        if (trabajadores.length === 0) {
-            const responseTrabajadores = await fetch(`${API_URL}/trabajadores`);
-            const dataTrabajadores = await responseTrabajadores.json();
-            trabajadores = dataTrabajadores.data || [];
-        }
-
-        // Filtrar solo veterinarios
-        veterinarios = trabajadores.filter(t => t.cargo === 'veterinario' && t.estado === 'activo');
-    } catch (error) {
-        console.error('Error al cargar datos:', error);
-        alert('Error al cargar los datos necesarios');
-        return;
-    }
-
-    const tratamiento = id ? tratamientos.find(t => t.id === id) : null;
-    const titulo = tratamiento ? 'Editar Tratamiento' : 'Nuevo Tratamiento';
-
-    // Si está editando, encontrar el cliente de la mascota
-    let clienteSeleccionado = null;
-    if (tratamiento) {
-        const mascotaTratamiento = mascotas.find(m => m.id === tratamiento.mascota_id);
-        if (mascotaTratamiento) {
-            clienteSeleccionado = mascotaTratamiento.cliente_id;
-        }
-    }
-
-    const modalHTML = `
-        <div class="modal-overlay" onclick="cerrarModal()">
-            <div class="modal-content" onclick="event.stopPropagation()">
-                <div class="modal-header">
-                    <h2>${titulo}</h2>
-                    <button class="modal-close" onclick="cerrarModal()">&times;</button>
-                </div>
-                <form onsubmit="guardarTratamiento(event, ${id})">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Tutor / Cliente *</label>
-                            <select id="cliente_id" required ${tratamiento ? 'disabled' : ''} onchange="filtrarMascotasPorCliente()">
-                                <option value="">Seleccione tutor</option>
-                                ${clientes.map(c => `
-                                    <option value="${c.id}" ${clienteSeleccionado === c.id ? 'selected' : ''}>
-                                        ${c.nombres} ${c.apellido_paterno} - ${c.dni}
-                                    </option>
-                                `).join('')}
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Mascota *</label>
-                            <select id="mascota_id" required ${tratamiento ? 'disabled' : ''}>
-                                <option value="">Seleccione mascota</option>
-                            </select>
-                            ${tratamiento ? `<input type="hidden" id="mascota_id_hidden" value="${tratamiento.mascota_id}">` : ''}
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Veterinario Encargado *</label>
-                            <select id="veterinario_id" required>
-                                <option value="">Seleccione veterinario</option>
-                                ${veterinarios.map(v => `
-                                    <option value="${v.id}" ${tratamiento && tratamiento.veterinario_id === v.id ? 'selected' : ''}>
-                                        Dr. ${v.nombres} ${v.apellidos}${v.especialidad ? ' - ' + v.especialidad : ''}
-                                    </option>
-                                `).join('')}
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Estado *</label>
-                            <select id="estado" required>
-                                <option value="en_curso" ${tratamiento?.estado === 'en_curso' ? 'selected' : ''}>En Curso</option>
-                                <option value="completado" ${tratamiento?.estado === 'completado' ? 'selected' : ''}>Completado</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Tipo *</label>
-                            <select id="tipo" required onchange="toggleTipoTratamiento()">
-                                <option value="">Seleccione tipo</option>
-                                <option value="enfermedad" ${tratamiento?.tipo === 'enfermedad' ? 'selected' : ''}>Enfermedad a Tratar</option>
-                                <option value="vacuna" ${tratamiento?.tipo === 'vacuna' ? 'selected' : ''}>Vacuna a Colocar</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-row" id="row_enfermedad" style="display: ${tratamiento?.tipo === 'enfermedad' || !tratamiento ? 'flex' : 'none'}">
-                        <div class="form-group full-width">
-                            <label>Enfermedad a Tratar</label>
-                            <input type="text" id="enfermedad" value="${tratamiento?.enfermedad || ''}" 
-                                placeholder="Ej: Parasitosis, Dermatitis, Infección">
-                        </div>
-                    </div>
-                    <div class="form-row" id="row_vacuna" style="display: ${tratamiento?.tipo === 'vacuna' ? 'flex' : 'none'}">
-                        <div class="form-group full-width">
-                            <label>Vacuna a Colocar</label>
-                            <input type="text" id="vacuna" value="${tratamiento?.vacuna || ''}" 
-                                placeholder="Ej: Sextuple, Antirrábica, Triple Felina">
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group full-width">
-                            <label>Descripción / Indicaciones</label>
-                            <textarea id="descripcion" rows="3" placeholder="Detalles adicionales, medicamentos, instrucciones...">${tratamiento?.descripcion || ''}</textarea>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Fecha Inicio *</label>
-                            <input type="date" id="fecha_inicio" 
-                                value="${tratamiento?.fecha_inicio ? tratamiento.fecha_inicio.split('T')[0] : ''}" 
-                                ${tratamiento ? 'readonly' : 'required'}>
-                        </div>
-                        <div class="form-group">
-                            <label>Próxima Visita (Cuándo Regresar)</label>
-                            <input type="date" id="fecha_proxima_visita" 
-                                value="${tratamiento?.fecha_proxima_visita ? tratamiento.fecha_proxima_visita.split('T')[0] : ''}">
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Costo (S/)</label>
-                            <input type="number" id="costo" step="0.01" min="0" 
-                                value="${tratamiento?.costo || ''}">
-                        </div>
-                    </div>
-                    <div class="modal-actions">
-                        <button type="button" class="btn btn-secondary" onclick="cerrarModal()">Cancelar</button>
-                        <button type="submit" class="btn btn-primary">Guardar</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    `;
-
-    document.getElementById('modalContainer').innerHTML = modalHTML;
-
-    // Establecer fecha inicial si es nuevo
-    if (!tratamiento) {
-        const hoy = new Date().toISOString().split('T')[0];
-        document.getElementById('fecha_inicio').value = hoy;
-    } else {
-        // Si está editando, filtrar y seleccionar la mascota
-        filtrarMascotasPorCliente();
-    }
-}
-
-function filtrarMascotasPorCliente() {
-    const clienteId = document.getElementById('cliente_id').value;
-    const selectMascota = document.getElementById('mascota_id');
-    const mascotaActual = selectMascota.value; // Guardar selección actual si existe
-
-    // Limpiar opciones
-    selectMascota.innerHTML = '<option value="">Seleccione mascota</option>';
-
-    if (clienteId) {
-        // Filtrar mascotas del cliente seleccionado
-        const mascotasCliente = mascotas.filter(m => m.cliente_id == clienteId && m.estado === 'activo');
-
-        mascotasCliente.forEach(m => {
-            const option = document.createElement('option');
-            option.value = m.id;
-            option.textContent = `${m.nombre} (${m.especie} - ${m.raza})`;
-            if (m.id == mascotaActual) {
-                option.selected = true;
-            }
-            selectMascota.appendChild(option);
-        });
-
-        if (mascotasCliente.length === 0) {
-            selectMascota.innerHTML = '<option value="">No hay mascotas registradas para este tutor</option>';
-        }
-    }
-}
-
-function toggleTipoTratamiento() {
-    const tipo = document.getElementById('tipo').value;
-    const rowEnfermedad = document.getElementById('row_enfermedad');
-    const rowVacuna = document.getElementById('row_vacuna');
-
-    if (tipo === 'enfermedad') {
-        rowEnfermedad.style.display = 'flex';
-        rowVacuna.style.display = 'none';
-        document.getElementById('vacuna').value = '';
-    } else if (tipo === 'vacuna') {
-        rowEnfermedad.style.display = 'none';
-        rowVacuna.style.display = 'flex';
-        document.getElementById('enfermedad').value = '';
-    } else {
-        rowEnfermedad.style.display = 'none';
-        rowVacuna.style.display = 'none';
-    }
-}
-
-async function guardarTratamiento(event, id) {
-    event.preventDefault();
-
-    const tipo = document.getElementById('tipo').value;
-    const tratamientoData = {
-        mascota_id: id ? document.getElementById('mascota_id_hidden').value : document.getElementById('mascota_id').value,
-        veterinario_id: document.getElementById('veterinario_id').value,
-        tipo: tipo,
-        enfermedad: tipo === 'enfermedad' ? document.getElementById('enfermedad').value : null,
-        vacuna: tipo === 'vacuna' ? document.getElementById('vacuna').value : null,
-        descripcion: document.getElementById('descripcion').value,
-        fecha_inicio: document.getElementById('fecha_inicio').value,
-        fecha_proxima_visita: document.getElementById('fecha_proxima_visita').value || null,
-        costo: parseFloat(document.getElementById('costo').value) || null,
-        estado: document.getElementById('estado').value
-    };
-
-    try {
-        const url = id ? `${API_URL}/tratamientos/${id}` : `${API_URL}/tratamientos`;
-        const method = id ? 'PUT' : 'POST';
-
-        const response = await fetch(url, {
-            method: method,
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(tratamientoData)
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-            cerrarModal();
-            loadTratamientos();
-        } else {
-            alert(data.message || 'Error al guardar el tratamiento');
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        alert('Error al guardar el tratamiento');
     }
 }
 

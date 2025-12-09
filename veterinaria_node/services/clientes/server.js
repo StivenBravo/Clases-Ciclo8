@@ -64,7 +64,7 @@ async function consultarReniec(dni) {
 // GET - Listar todos los clientes
 app.get('/api/clientes', async (req, res) => {
     try {
-        const [rows] = await pool.query('SELECT * FROM clientes ORDER BY fecha_registro DESC');
+        const [rows] = await pool.query('SELECT * FROM clientes WHERE estado = "activo" ORDER BY fecha_registro DESC');
         res.json({
             success: true,
             data: rows,
